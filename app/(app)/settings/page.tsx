@@ -25,12 +25,10 @@ export default async function SettingsPage({
       <h1 className="text-2xl font-semibold">Settings</h1>
 
       {connected === "1" && (
-        <p className="rounded bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-950 dark:text-green-400">
-          Google Health connected.
-        </p>
+        <p className="rounded bg-success-bg px-3 py-2 text-sm text-success">Google Health connected.</p>
       )}
       {error && (
-        <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-400">
+        <p className="rounded bg-danger-bg px-3 py-2 text-sm text-danger">
           Connection failed ({error}). Please try again.
         </p>
       )}
@@ -46,7 +44,7 @@ export default async function SettingsPage({
         )}
         <a
           href="/api/auth/google"
-          className="mt-2 inline-block w-fit rounded bg-foreground px-4 py-2 text-sm text-background"
+          className="mt-2 inline-block w-fit rounded bg-foreground px-4 py-2 text-sm text-background transition-transform active:scale-[0.98]"
         >
           {tokenRow ? "Reconnect" : "Connect Google Health"}
         </a>
@@ -57,10 +55,10 @@ export default async function SettingsPage({
         {lastSync ? (
           <div className="flex flex-col gap-1 text-sm text-foreground/60">
             <p>
-              {formatDateTime(lastSync.started_at)} — {lastSync.status}
+              {formatDateTime(lastSync.started_at)} - {lastSync.status}
             </p>
             {lastSync.domains ? <p>{JSON.stringify(lastSync.domains)}</p> : null}
-            {lastSync.error ? <p className="text-red-600 dark:text-red-400">{lastSync.error}</p> : null}
+            {lastSync.error ? <p className="text-danger">{lastSync.error}</p> : null}
           </div>
         ) : (
           <p className="text-sm text-foreground/60">No syncs have run yet.</p>

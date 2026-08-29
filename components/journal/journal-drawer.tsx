@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { X } from "@phosphor-icons/react";
 import { saveJournalEntry } from "@/lib/actions/journal";
 import type { HabitCorrelation } from "@/lib/analytics/habit-correlations";
 
@@ -56,7 +57,7 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-fit rounded border border-black/[.08] px-4 py-2 text-sm dark:border-white/[.145]"
+        className="w-fit rounded border border-black/[.08] px-4 py-2 text-sm transition-[background-color,transform] active:scale-[0.98] dark:border-white/[.145]"
       >
         Log habits
       </button>
@@ -66,14 +67,20 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
           className="fixed inset-0 z-50 flex items-end bg-black/40 sm:items-center sm:justify-center"
           onClick={() => setOpen(false)}
         >
+          {/* Overlay sheet is the one exception to the app's `rounded` (sm) radius scale. */}
           <div
             className="w-full max-w-md rounded-t-lg border border-black/[.08] bg-background p-6 sm:rounded-lg dark:border-white/[.145]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Daily Habits</h2>
-              <button type="button" onClick={() => setOpen(false)} className="text-foreground/60" aria-label="Close">
-                ✕
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded p-1 text-foreground/60 transition-colors hover:bg-black/[.04] active:scale-[0.98] dark:hover:bg-white/[.08]"
+                aria-label="Close"
+              >
+                <X size={16} weight="bold" />
               </button>
             </div>
 
@@ -88,7 +95,7 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
                   key={habit}
                   type="button"
                   onClick={() => toggleHabit(habit)}
-                  className={`rounded-full px-3 py-1.5 text-sm ${
+                  className={`rounded-full px-3 py-1.5 text-sm transition-[background-color,transform] active:scale-[0.98] ${
                     habits.includes(habit)
                       ? "bg-foreground text-background"
                       : "border border-black/[.08] dark:border-white/[.145]"
@@ -116,7 +123,7 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
               <button
                 type="button"
                 onClick={addCustomHabit}
-                className="rounded border border-black/[.08] px-3 py-2 text-sm dark:border-white/[.145]"
+                className="rounded border border-black/[.08] px-3 py-2 text-sm transition-transform active:scale-[0.98] dark:border-white/[.145]"
               >
                 Add
               </button>
@@ -134,7 +141,7 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
               type="button"
               onClick={handleSave}
               disabled={isPending}
-              className="w-full rounded bg-foreground px-4 py-2 text-sm text-background disabled:opacity-50"
+              className="w-full rounded bg-foreground px-4 py-2 text-sm text-background transition-transform active:scale-[0.98] disabled:opacity-50"
             >
               {isPending ? "Saving..." : saved ? "Saved" : "Save"}
             </button>
@@ -165,7 +172,7 @@ function DateToggle({ label, active, onClick }: { label: string; active: boolean
     <button
       type="button"
       onClick={onClick}
-      className={`rounded px-3 py-1 text-sm ${
+      className={`rounded px-3 py-1 text-sm transition-[background-color,transform] active:scale-[0.98] ${
         active ? "bg-foreground text-background" : "border border-black/[.08] dark:border-white/[.145]"
       }`}
     >

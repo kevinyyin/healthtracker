@@ -66,13 +66,13 @@ export interface StrainTarget {
 /** Suggests a target Strain range for today based on last night's Recovery Score. */
 export function recommendTargetStrain(recovery: number | null): StrainTarget {
   if (recovery == null) {
-    return { min: 10.0, max: 14.0, label: "Building baseline — moderate effort suggested" };
+    return { min: 10.0, max: 14.0, label: "Building baseline, moderate effort suggested" };
   }
   if (recovery < 34) {
-    return { min: 6.0, max: 9.0, label: "Low recovery — take it easy" };
+    return { min: 6.0, max: 9.0, label: "Low recovery, take it easy" };
   }
   if (recovery < 67) {
-    return { min: 10.0, max: 14.0, label: "Moderate recovery — steady effort" };
+    return { min: 10.0, max: 14.0, label: "Moderate recovery, steady effort" };
   }
-  return { min: 15.0, max: 18.0, label: "High recovery — push today" };
+  return { min: 15.0, max: 18.0, label: "High recovery, push today" };
 }

@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/format";
 import { EmptyState } from "@/components/empty-state";
+import { MetricCard } from "@/components/metric-card";
 
 const METRIC_LABELS: Record<string, string> = {
   heart_rate: "Heart rate",
@@ -44,13 +45,12 @@ export default async function VitalsPage() {
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {[...latestByMetric.values()].map((reading) => (
-          <div key={reading.metric_type} className="rounded border border-black/[.08] p-4 dark:border-white/[.145]">
-            <p className="text-sm text-foreground/60">{METRIC_LABELS[reading.metric_type] ?? reading.metric_type}</p>
-            <p className="text-2xl font-semibold tabular-nums">
-              {reading.value ?? "—"} <span className="text-sm font-normal">{reading.unit}</span>
-            </p>
-            <p className="text-xs text-foreground/60">{formatDateTime(reading.recorded_at)}</p>
-          </div>
+          <MetricCard
+            key={reading.metric_type}
+            label={METRIC_LABELS[reading.metric_type] ?? reading.metric_type}
+            value={`${reading.value ?? "-"} ${reading.unit}`}
+            sub={formatDateTime(reading.recorded_at)}
+          />
         ))}
       </div>
 
@@ -62,7 +62,7 @@ export default async function VitalsPage() {
               <span>{METRIC_LABELS[reading.metric_type] ?? reading.metric_type}</span>
               <span className="text-foreground/60">{formatDateTime(reading.recorded_at)}</span>
               <span className="tabular-nums">
-                {reading.value ?? "—"} {reading.unit}
+                {reading.value ?? "-"} {reading.unit}
               </span>
             </li>
           ))}

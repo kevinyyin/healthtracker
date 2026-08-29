@@ -76,7 +76,7 @@ export default async function SleepPage() {
               <div>
                 <p className="font-medium">{formatDate(session.start_time)}</p>
                 <p className="text-sm text-foreground/60">
-                  {formatDateTime(session.start_time)} – {formatDateTime(session.end_time)}
+                  {formatDateTime(session.start_time)} - {formatDateTime(session.end_time)}
                 </p>
               </div>
               <p className="text-lg font-semibold tabular-nums">
