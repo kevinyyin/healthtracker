@@ -27,16 +27,19 @@ export function ScoreRing({ value, display, label, sub, color }: ScoreRingProps)
             strokeWidth={STROKE}
             className="stroke-black/[.08] dark:stroke-white/[.145]"
           />
-          <circle
-            cx={SIZE / 2}
-            cy={SIZE / 2}
-            r={RADIUS}
-            fill="none"
-            strokeWidth={STROKE}
-            strokeLinecap="round"
-            strokeDasharray={`${dash} ${CIRCUMFERENCE}`}
-            style={{ stroke: color }}
-          />
+          {/* A zero-length dash still paints a round-cap dot, so skip the arc entirely at 0%. */}
+          {dash > 0 && (
+            <circle
+              cx={SIZE / 2}
+              cy={SIZE / 2}
+              r={RADIUS}
+              fill="none"
+              strokeWidth={STROKE}
+              strokeLinecap="round"
+              strokeDasharray={`${dash} ${CIRCUMFERENCE}`}
+              style={{ stroke: color }}
+            />
+          )}
         </svg>
         <div className="absolute inset-0 flex items-center justify-center text-lg font-semibold tabular-nums">
           {display}

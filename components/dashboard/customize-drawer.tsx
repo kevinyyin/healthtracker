@@ -81,12 +81,12 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
                     className="flex items-center justify-between rounded border border-black/[.08] px-3 py-2 text-sm dark:border-white/[.145]"
                   >
                     <span>{widgetLabel(key)}</span>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 -mr-2">
                       <button
                         type="button"
                         onClick={() => move(i, -1)}
                         disabled={i === 0}
-                        className="rounded px-1.5 py-0.5 text-foreground/60 transition-colors hover:bg-black/[.04] disabled:opacity-30 dark:hover:bg-white/[.08]"
+                        className="rounded p-2.5 text-foreground/60 transition-colors hover:bg-black/[.04] disabled:opacity-30 dark:hover:bg-white/[.08]"
                         aria-label="Move up"
                       >
                         &uarr;
@@ -95,7 +95,7 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
                         type="button"
                         onClick={() => move(i, 1)}
                         disabled={i === keys.length - 1}
-                        className="rounded px-1.5 py-0.5 text-foreground/60 transition-colors hover:bg-black/[.04] disabled:opacity-30 dark:hover:bg-white/[.08]"
+                        className="rounded p-2.5 text-foreground/60 transition-colors hover:bg-black/[.04] disabled:opacity-30 dark:hover:bg-white/[.08]"
                         aria-label="Move down"
                       >
                         &darr;
@@ -103,7 +103,7 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
                       <button
                         type="button"
                         onClick={() => remove(key)}
-                        className="rounded px-1.5 py-0.5 text-foreground/60 transition-colors hover:bg-black/[.04] dark:hover:bg-white/[.08]"
+                        className="rounded p-2.5 text-foreground/60 transition-colors hover:bg-black/[.04] dark:hover:bg-white/[.08]"
                         aria-label={`Remove ${widgetLabel(key)}`}
                       >
                         <X size={14} />
