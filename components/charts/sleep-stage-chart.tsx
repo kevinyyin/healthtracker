@@ -1,0 +1,35 @@
+"use client";
+
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
+export interface SleepStageNight {
+  date: string;
+  deep: number | null;
+  rem: number | null;
+  light: number | null;
+  awake: number | null;
+}
+
+export function SleepStageChart({ nights }: { nights: SleepStageNight[] }) {
+  if (nights.length === 0) return null;
+
+  return (
+    <div className="h-64 w-full">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={nights}>
+          <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.4} />
+          <YAxis tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.4} unit="m" />
+          <Tooltip
+            contentStyle={{ background: "var(--background)", border: "1px solid rgba(128,128,128,0.3)", fontSize: 12 }}
+          />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <Bar dataKey="deep" stackId="sleep" fill="#3b5bdb" name="Deep" />
+          <Bar dataKey="rem" stackId="sleep" fill="#7048e8" name="REM" />
+          <Bar dataKey="light" stackId="sleep" fill="#4dabf7" name="Light" />
+          <Bar dataKey="awake" stackId="sleep" fill="#adb5bd" name="Awake" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
