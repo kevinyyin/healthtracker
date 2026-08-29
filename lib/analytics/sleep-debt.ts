@@ -3,7 +3,7 @@ export interface SleepNight {
   total_sleep_minutes: number | null;
 }
 
-const BASELINE_MINUTES = 480; // 8 hours
+export const BASELINE_MINUTES = 480; // 8 hours
 const MAX_DEBT_REPAYMENT_MINUTES = 120;
 const DEBT_REPAYMENT_FRACTION = 1 / 3;
 const EXERTION_MINUTES_PER_STRAIN_POINT = 6;
