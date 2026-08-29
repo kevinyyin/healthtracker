@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { serverEnv } from "@/lib/env.server";
-import { syncUser } from "@/lib/google-health/sync";
+import { describeError, syncUser } from "@/lib/google-health/sync";
 
 /**
  * Pulls the latest Google Health data for every connected user and upserts it into
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   const summary = results.map((result, i) => ({
     user_id: tokens![i].user_id,
     status: result.status,
-    ...(result.status === "rejected" ? { error: String(result.reason) } : {}),
+    ...(result.status === "rejected" ? { error: describeError(result.reason) } : {}),
   }));
 
   return NextResponse.json({ synced: summary.length, results: summary });

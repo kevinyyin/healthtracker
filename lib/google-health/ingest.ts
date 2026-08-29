@@ -94,23 +94,30 @@ export async function syncSparseVitals(admin: SupabaseClient, userId: string, ac
   let total = 0;
 
   for (const metric of SPARSE_VITAL_METRICS) {
-    const { dataPoints } = await listDataPoints(accessToken, metric.dataType);
-    if (dataPoints.length === 0) continue;
+    try {
+      const { dataPoints } = await listDataPoints(accessToken, metric.dataType);
+      if (dataPoints.length === 0) continue;
 
-    const rows = dataPoints.map((dp: GoogleHealthDataPoint) => ({
-      user_id: userId,
-      metric_type: metric.metricType,
-      recorded_at: dp.startTime,
-      value: extractNumericValue(dp.value),
-      unit: metric.unit,
-      raw: dp as unknown as Record<string, unknown>,
-      synced_at: new Date().toISOString(),
-    }));
+      const rows = dataPoints.map((dp: GoogleHealthDataPoint) => ({
+        user_id: userId,
+        metric_type: metric.metricType,
+        recorded_at: dp.startTime,
+        value: extractNumericValue(dp.value),
+        unit: metric.unit,
+        raw: dp as unknown as Record<string, unknown>,
+        synced_at: new Date().toISOString(),
+      }));
 
-    // No stable external id on vitals readings, so these are append-only inserts.
-    const { error } = await admin.from("vitals_readings").insert(rows);
-    if (error) throw error;
-    total += rows.length;
+      // No stable external id on vitals readings, so these are append-only inserts.
+      const { error } = await admin.from("vitals_readings").insert(rows);
+      if (error) throw error;
+      total += rows.length;
+    } catch (err) {
+      // One metric's data type being unsupported/unconfirmed (see the
+      // GOOGLE_HEALTH_DATA_TYPES comment) shouldn't take down sleep/activity/HR sync —
+      // log and move on to the next metric.
+      console.error(`syncSparseVitals: failed to sync ${metric.metricType}`, err);
+    }
   }
 
   return total;
