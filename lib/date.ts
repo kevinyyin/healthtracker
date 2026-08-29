@@ -68,6 +68,19 @@ export function localDayEndIso(dateString: string): string {
   return localDayStartIso(nextDayString(dateString));
 }
 
+/** Current wall-clock time (HH:MM:SS) in APP_TIMEZONE, comparable to a Postgres `time` column. */
+export function currentLocalTimeString(): string {
+  return new Date().toLocaleTimeString("en-GB", { timeZone: APP_TIMEZONE, hourCycle: "h23" });
+}
+
+/**
+ * Whether `current` falls within [from, to] (inclusive), as HH:MM[:SS] strings.
+ * Assumes from < to — does not handle windows that cross midnight.
+ */
+export function isTimeInWindow(current: string, from: string, to: string): boolean {
+  return current >= from && current <= to;
+}
+
 /** Whole years elapsed between a YYYY-MM-DD date of birth and a YYYY-MM-DD reference date. */
 export function ageInYears(dob: string, asOfDate: string): number {
   const birth = new Date(`${dob}T12:00:00`);

@@ -1,0 +1,15 @@
+name: Smart Alarm Fire Check
+
+on:
+  schedule:
+    - cron: "* * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  fire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger /api/alarms/fire
+        run: |
+          curl -sf -X GET "${{ vars.APP_URL }}/api/alarms/fire" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
