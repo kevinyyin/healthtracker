@@ -8,6 +8,9 @@ export const GOOGLE_HEALTH_DATA_TYPES = {
   steps: "steps",
   exercise: "exercise",
   heartRate: "heart-rate",
+  hrv: "heart-rate-variability", // UNCONFIRMED — extrapolated from the kebab-case pattern above
+  spo2: "oxygen-saturation", // UNCONFIRMED
+  skinTemperature: "skin-temperature", // UNCONFIRMED
 } as const;
 
 export type GoogleHealthDataType =
