@@ -12,7 +12,7 @@ export function BioAgeTeaser({ result }: { result: BiologicalAgeResult | null })
   return (
     <Link
       href={result == null ? "/settings" : "/biological-age"}
-      className="flex items-center justify-between rounded border border-black/[.08] p-4 transition-colors hover:bg-black/[.02] dark:border-white/[.145] dark:hover:bg-white/[.04]"
+      className="flex h-full items-center justify-between rounded border border-black/[.08] p-4 transition-colors hover:bg-black/[.02] dark:border-white/[.145] dark:hover:bg-white/[.04]"
     >
       <div>
         <p className="text-sm text-foreground/60">Biological Age</p>

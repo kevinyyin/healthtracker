@@ -36,7 +36,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
   switch (key) {
     case "strain_ring":
       return (
-        <div className="flex justify-center rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+        <div className="flex h-full items-center justify-center rounded border border-black/[.08] p-4 dark:border-white/[.145]">
           <ScoreRing
             value={data.strain / STRAIN_MAX}
             display={data.strain.toFixed(1)}
@@ -48,7 +48,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
       );
     case "recovery_ring":
       return (
-        <div className="flex flex-col items-center gap-3 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+        <div className="flex h-full flex-col items-center justify-center gap-3 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
           <ScoreRing
             value={data.recovery.score != null ? data.recovery.score / 100 : null}
             display={data.recovery.score != null ? `${Math.round(data.recovery.score)}%` : "-"}
@@ -57,13 +57,18 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
             color={RING_COLORS.recovery}
           />
           {data.recovery.confidence !== "full" && (
-            <BaselineProgress label="Recovery Score" have={data.recovery.nightsUsed} need={RECOVERY_BASELINE_TARGET} />
+            <BaselineProgress
+              label="Recovery Score"
+              have={data.recovery.nightsUsed}
+              need={RECOVERY_BASELINE_TARGET}
+              compact
+            />
           )}
         </div>
       );
     case "sleep_ring":
       return (
-        <div className="flex justify-center rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+        <div className="flex h-full items-center justify-center rounded border border-black/[.08] p-4 dark:border-white/[.145]">
           <ScoreRing
             value={data.sleepScore != null ? data.sleepScore / 100 : null}
             display={data.sleepScore != null ? `${data.sleepScore}%` : "-"}

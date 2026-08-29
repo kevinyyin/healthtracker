@@ -52,6 +52,19 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+/*
+ * Global keyboard-focus indicator. Uses --accent (otherwise unused in this
+ * grayscale-first system) so focus reads as a distinct system signal, not a
+ * data color or the invert-based "primary action" treatment. Browsers clip
+ * the outline to the element's own border-radius automatically, and
+ * :focus-visible only fires for keyboard/programmatic focus, so it never
+ * fights the active:scale-[0.98] press feedback used on click.
+ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
