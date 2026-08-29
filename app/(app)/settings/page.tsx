@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/format";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { AlarmForm } from "@/components/settings/alarm-form";
 
 export default async function SettingsPage({
   searchParams,
@@ -10,17 +11,20 @@ export default async function SettingsPage({
   const { connected, error } = await searchParams;
   const { supabase, user } = await requireUser();
 
-  const [{ data: tokenRow }, { data: lastSync }, { data: profile }] = await Promise.all([
-    supabase.from("google_oauth_tokens").select("updated_at").eq("user_id", user.id).maybeSingle(),
-    supabase
-      .from("sync_log")
-      .select("started_at, finished_at, status, domains, error")
-      .eq("user_id", user.id)
-      .order("started_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
-  ]);
+  const [{ data: tokenRow }, { data: lastSync }, { data: profile }, { data: alarm }, { count: subscriptionCount }] =
+    await Promise.all([
+      supabase.from("google_oauth_tokens").select("updated_at").eq("user_id", user.id).maybeSingle(),
+      supabase
+        .from("sync_log")
+        .select("started_at, finished_at, status, domains, error")
+        .eq("user_id", user.id)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
+      supabase.from("alarms").select("enabled, wake_from, wake_to").eq("user_id", user.id).maybeSingle(),
+      supabase.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    ]);
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
@@ -72,6 +76,18 @@ export default async function SettingsPage({
         <ProfileForm
           initialDateOfBirth={profile?.date_of_birth ?? null}
           initialBiologicalSex={(profile?.biological_sex as "male" | "female" | null) ?? null}
+        />
+      </section>
+
+      <section className="flex flex-col gap-2 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+        <h2 className="font-medium">Smart Alarm</h2>
+        <AlarmForm
+          initialAlarm={
+            alarm
+              ? { enabled: alarm.enabled, wakeFrom: alarm.wake_from, wakeTo: alarm.wake_to }
+              : null
+          }
+          subscriptionCount={subscriptionCount ?? 0}
         />
       </section>
     </main>

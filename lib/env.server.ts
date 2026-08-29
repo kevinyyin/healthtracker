@@ -8,6 +8,8 @@ const serverEnvSchema = z.object({
   GOOGLE_HEALTH_REDIRECT_URI: z.string().url(),
   APP_BASE_URL: z.string().url(),
   CRON_SECRET: z.string().min(1),
+  VAPID_PRIVATE_KEY: z.string().min(1),
+  VAPID_SUBJECT: z.string().min(1),
 });
 
 /** Server-only secrets. Never import this from a Client Component. */
@@ -18,4 +20,6 @@ export const serverEnv = serverEnvSchema.parse({
   GOOGLE_HEALTH_REDIRECT_URI: process.env.GOOGLE_HEALTH_REDIRECT_URI,
   APP_BASE_URL: process.env.APP_BASE_URL,
   CRON_SECRET: process.env.CRON_SECRET,
+  VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+  VAPID_SUBJECT: process.env.VAPID_SUBJECT,
 });
