@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeRecoveryScore } from "@/lib/analytics/recovery-score";
 import { computeBiologicalAgeTrend, type BiologicalSex } from "@/lib/analytics/biological-age";
+import { excludedDatesFromPeriods } from "@/lib/activity-status";
 import { MetricTrendChart, type TrendPoint } from "@/components/charts/metric-trend-chart";
 import { EmptyState } from "@/components/empty-state";
 
@@ -50,7 +51,7 @@ export default async function TrendsPage({
 
   const today = todayLocalDateString();
 
-  const [{ data: healthLogRows }, { data: profile }] = await Promise.all([
+  const [{ data: healthLogRows }, { data: profile }, { data: statusRows }] = await Promise.all([
     supabase
       .from("health_logs")
       .select("date, hrv_rmssd, resting_hr, deep_sleep_minutes, total_sleep_minutes")
@@ -58,7 +59,10 @@ export default async function TrendsPage({
       .gte("date", daysBefore(today, range.days + BASELINE_BUFFER_DAYS))
       .order("date", { ascending: true }),
     supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
+    supabase.from("activity_status_periods").select("status, started_on, ended_on").eq("user_id", user.id),
   ]);
+
+  const excludedDates = excludedDatesFromPeriods(statusRows ?? [], today);
 
   const logs: HealthLogRow[] = (healthLogRows ?? []).map((l) => ({
     date: l.date,
@@ -81,7 +85,7 @@ export default async function TrendsPage({
   }
 
   const cutoff = daysBefore(today, range.days);
-  const points = computeSeries(metric.key, logs, cutoff, range.days, profile);
+  const points = computeSeries(metric.key, logs, cutoff, range.days, profile, excludedDates);
 
   const displayPoints: TrendPoint[] = points.map((p) => ({
     date: formatDate(p.date),
@@ -130,6 +134,7 @@ function computeSeries(
   cutoff: string,
   rangeDays: number,
   profile: { date_of_birth: string; biological_sex: string } | null,
+  excludedDates: Set<string>,
 ): { date: string; value: number | null }[] {
   const visible = logs.filter((l) => l.date >= cutoff);
 
@@ -145,12 +150,18 @@ function computeSeries(
     case "recovery":
       return visible.map((day) => {
         const history = logs.filter((l) => l.date < day.date);
-        const result = computeRecoveryScore(history, day);
+        const result = computeRecoveryScore(history, day, excludedDates);
         return { date: day.date, value: result.score };
       });
     case "bio_age": {
       if (!profile) return [];
-      const trend = computeBiologicalAgeTrend(logs, profile.date_of_birth, profile.biological_sex as BiologicalSex, rangeDays);
+      const trend = computeBiologicalAgeTrend(
+        logs,
+        profile.date_of_birth,
+        profile.biological_sex as BiologicalSex,
+        rangeDays,
+        excludedDates,
+      );
       return trend.map((t) => ({ date: t.date, value: t.bioAge }));
     }
   }

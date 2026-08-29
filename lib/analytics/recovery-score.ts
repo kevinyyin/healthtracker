@@ -32,11 +32,17 @@ function logistic(z: number): number {
 /**
  * Compares tonight's nocturnal HRV/RHR against a rolling baseline (mean + stddev)
  * built from the prior nights in `history`. Higher HRV and lower RHR relative to
- * baseline both push the score up.
+ * baseline both push the score up. Dates in `excludedDates` (e.g. flagged Sick/
+ * Injured/Traveling via lib/activity-status.ts) are skipped when building the
+ * baseline, so an atypical stretch doesn't skew comparisons for weeks afterward.
  */
-export function computeRecoveryScore(history: NightlyMetrics[], tonight: NightlyMetrics): RecoveryResult {
+export function computeRecoveryScore(
+  history: NightlyMetrics[],
+  tonight: NightlyMetrics,
+  excludedDates?: Set<string>,
+): RecoveryResult {
   const baseline = history
-    .filter((n) => n.date < tonight.date)
+    .filter((n) => n.date < tonight.date && !excludedDates?.has(n.date))
     .slice(-BASELINE_WINDOW_DAYS);
 
   const hrvHistory = baseline.map((n) => n.hrv_rmssd).filter((v): v is number => v != null);

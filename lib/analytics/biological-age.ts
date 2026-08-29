@@ -147,14 +147,20 @@ function buildFactor(
  * Uses a wider baseline than recovery-score.ts's 3/14-night gate: biological age is
  * meant to represent a slow-moving trait, so a longer, more stable window is more
  * defensible than reusing the nightly-fluctuation constants verbatim.
+ *
+ * Dates in `excludedDates` (e.g. flagged Sick/Injured/Traveling via
+ * lib/activity-status.ts) are skipped when building the baseline.
  */
 export function computeBiologicalAge(
   history: BioAgeNightlyMetrics[],
   asOfDate: string,
   chronoAge: number,
   sex: BiologicalSex,
+  excludedDates?: Set<string>,
 ): BiologicalAgeResult {
-  const baseline = history.filter((n) => n.date < asOfDate).slice(-BASELINE_WINDOW_DAYS);
+  const baseline = history
+    .filter((n) => n.date < asOfDate && !excludedDates?.has(n.date))
+    .slice(-BASELINE_WINDOW_DAYS);
 
   const hrvValues = baseline.map((n) => n.hrv_rmssd).filter((v): v is number => v != null);
   const rhrValues = baseline.map((n) => n.resting_hr).filter((v): v is number => v != null);
@@ -214,13 +220,14 @@ export function computeBiologicalAgeTrend(
   dob: string,
   sex: BiologicalSex,
   trendDays = 90,
+  excludedDates?: Set<string>,
 ): { date: string; bioAge: number | null; chronoAge: number }[] {
   const dates = logsAscending.map((l) => l.date).slice(-trendDays);
 
   return dates.map((date) => {
     const chronoAge = ageInYears(dob, date);
     const historyUpToDate = logsAscending.filter((l) => l.date <= date);
-    const result = computeBiologicalAge(historyUpToDate, date, chronoAge, sex);
+    const result = computeBiologicalAge(historyUpToDate, date, chronoAge, sex, excludedDates);
     return { date, bioAge: result.bioAge, chronoAge };
   });
 }

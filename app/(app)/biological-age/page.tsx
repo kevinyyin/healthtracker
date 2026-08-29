@@ -3,6 +3,7 @@ import { ageInYears, daysBefore, todayLocalDateString } from "@/lib/date";
 import { formatDate } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeBiologicalAge, computeBiologicalAgeTrend, type BiologicalSex } from "@/lib/analytics/biological-age";
+import { excludedDatesFromPeriods } from "@/lib/activity-status";
 import { ScoreRing } from "@/components/score-ring";
 import { MetricCard } from "@/components/metric-card";
 import { BaselineProgress } from "@/components/baseline-progress";
@@ -44,6 +45,12 @@ export default async function BiologicalAgePage() {
     .gte("date", daysBefore(today, HISTORY_DAYS))
     .order("date", { ascending: true });
 
+  const { data: statusRows } = await supabase
+    .from("activity_status_periods")
+    .select("status, started_on, ended_on")
+    .eq("user_id", user.id);
+  const excludedDates = excludedDatesFromPeriods(statusRows ?? [], today);
+
   const logsAscending = (healthLogRows ?? []).map((l) => ({
     date: l.date,
     hrv_rmssd: toNum(l.hrv_rmssd),
@@ -54,8 +61,8 @@ export default async function BiologicalAgePage() {
 
   const sex = profile.biological_sex as BiologicalSex;
   const chronoAge = ageInYears(profile.date_of_birth, today);
-  const result = computeBiologicalAge(logsAscending, today, chronoAge, sex);
-  const trend = computeBiologicalAgeTrend(logsAscending, profile.date_of_birth, sex, TREND_DAYS);
+  const result = computeBiologicalAge(logsAscending, today, chronoAge, sex, excludedDates);
+  const trend = computeBiologicalAgeTrend(logsAscending, profile.date_of_birth, sex, TREND_DAYS, excludedDates);
 
   const trendPoints: BioAgeTrendPoint[] = trend.map((t) => ({
     date: formatDate(t.date),
