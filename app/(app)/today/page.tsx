@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/supabase/server";
-import { daysBefore, localDayEndIso, localDayStartIso, todayLocalDateString } from "@/lib/date";
+import { ageInYears, daysBefore, localDayEndIso, localDayStartIso, todayLocalDateString } from "@/lib/date";
 import { formatDate } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeRecoveryScore, type NightlyMetrics } from "@/lib/analytics/recovery-score";
@@ -8,15 +9,20 @@ import { computeSleepTarget } from "@/lib/analytics/sleep-debt";
 import { computeEnergyBank } from "@/lib/analytics/energy-bank";
 import { computeStressTimeline } from "@/lib/analytics/stress-score";
 import { computeHabitCorrelations, type JournalDay, type OutcomeDay } from "@/lib/analytics/habit-correlations";
-import { HeroHeader } from "@/components/dashboard/hero-header";
-import { WorkoutRecommender } from "@/components/dashboard/workout-recommender";
-import { StressBatteryChart, type StressBatteryPoint } from "@/components/charts/stress-battery-chart";
+import { computeBiologicalAge, type BiologicalSex } from "@/lib/analytics/biological-age";
+import { DEFAULT_WIDGET_KEYS, isWidgetKey, type WidgetKey } from "@/lib/dashboard-widgets";
+import { WidgetGrid, type WidgetData } from "@/components/dashboard/widget-grid";
+import { CustomizeDrawer } from "@/components/dashboard/customize-drawer";
+import { type StressBatteryPoint } from "@/components/charts/stress-battery-chart";
 import { JournalDrawer } from "@/components/journal/journal-drawer";
-import { BaselineProgress } from "@/components/baseline-progress";
 
 const HEALTH_LOG_HISTORY_DAYS = 20;
-const RECOVERY_BASELINE_TARGET = 14;
 const DEFAULT_START_BATTERY = 70;
+// Separate, wider window than HEALTH_LOG_HISTORY_DAYS so the teaser's bio-age baseline
+// matches the dedicated /biological-age page (30-night baseline) — reusing the shared
+// query would also shift Recovery Score's own baseline, since it slices from the end
+// of whatever window is fetched.
+const BIO_AGE_HISTORY_DAYS = 35;
 
 export default async function TodayPage() {
   const { supabase, user } = await requireUser();
@@ -24,7 +30,14 @@ export default async function TodayPage() {
   const today = todayLocalDateString();
   const yesterday = daysBefore(today, 1);
 
-  const [{ data: healthLogRows }, { data: intradayRows }, { data: journalRows }] = await Promise.all([
+  const [
+    { data: healthLogRows },
+    { data: bioAgeLogRows },
+    { data: intradayRows },
+    { data: journalRows },
+    { data: profile },
+    { data: widgetsRow },
+  ] = await Promise.all([
     supabase
       .from("health_logs")
       .select("date, hrv_rmssd, resting_hr, deep_sleep_minutes, total_sleep_minutes")
@@ -32,14 +45,29 @@ export default async function TodayPage() {
       .order("date", { ascending: false })
       .limit(HEALTH_LOG_HISTORY_DAYS),
     supabase
+      .from("health_logs")
+      .select("date, hrv_rmssd, resting_hr, deep_sleep_minutes, total_sleep_minutes")
+      .eq("user_id", user.id)
+      .gte("date", daysBefore(today, BIO_AGE_HISTORY_DAYS))
+      .order("date", { ascending: true }),
+    supabase
       .from("intraday_hr")
       .select("recorded_at, bpm, activity_session_id")
       .eq("user_id", user.id)
       .gte("recorded_at", localDayStartIso(today))
       .lt("recorded_at", localDayEndIso(today))
       .order("recorded_at", { ascending: true }),
-    supabase.from("journal_entries").select("date, habits").eq("user_id", user.id).order("date", { ascending: true }),
+    supabase
+      .from("journal_entries")
+      .select("date, habits")
+      .eq("user_id", user.id)
+      .order("date", { ascending: true }),
+    supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
+    supabase.from("dashboard_widgets").select("widget_keys").eq("user_id", user.id).maybeSingle(),
   ]);
+
+  const storedKeys = (widgetsRow?.widget_keys ?? []).filter(isWidgetKey);
+  const widgetKeys: WidgetKey[] = storedKeys.length > 0 ? storedKeys : DEFAULT_WIDGET_KEYS;
 
   // health_logs numeric columns come back as strings from PostgREST — coerce once here.
   const logs = (healthLogRows ?? []).map((l) => ({
@@ -96,35 +124,53 @@ export default async function TodayPage() {
   const journalDays: JournalDay[] = (journalRows ?? []).map((j) => ({ date: j.date, habits: j.habits }));
   const correlations = computeHabitCorrelations(journalDays, outcomes);
 
+  const bioAgeLogs = (bioAgeLogRows ?? []).map((l) => ({
+    date: l.date,
+    hrv_rmssd: toNum(l.hrv_rmssd),
+    resting_hr: toNum(l.resting_hr),
+    deep_sleep_minutes: toNum(l.deep_sleep_minutes),
+    total_sleep_minutes: toNum(l.total_sleep_minutes),
+  }));
+  const bioAgeResult = profile
+    ? computeBiologicalAge(
+        bioAgeLogs,
+        today,
+        ageInYears(profile.date_of_birth, today),
+        profile.biological_sex as BiologicalSex,
+      )
+    : null;
+
   const habitsToday = journalDays.find((j) => j.date === today)?.habits ?? [];
   const habitsYesterday = journalDays.find((j) => j.date === yesterday)?.habits ?? [];
 
+  const widgetData: WidgetData = {
+    recovery,
+    strain: dayStrain.strain,
+    battery: currentBattery,
+    sleepTarget,
+    sleepScore,
+    bioAge: bioAgeResult,
+    hrv: tonight.hrv_rmssd,
+    restingHr: tonight.resting_hr,
+    chartData,
+  };
+
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-16">
-      <h1 className="text-2xl font-semibold">{formatDate(today)}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">{formatDate(today)}</h1>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/trends"
+            className="rounded border border-black/[.08] px-3 py-1.5 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-white/[.08]"
+          >
+            Trends
+          </Link>
+          <CustomizeDrawer initialKeys={widgetKeys} />
+        </div>
+      </div>
 
-      <HeroHeader
-        recovery={recovery}
-        strain={dayStrain.strain}
-        battery={currentBattery}
-        sleepTarget={sleepTarget}
-        sleepScore={sleepScore}
-      />
-
-      {recovery.confidence !== "full" && (
-        <BaselineProgress label="Recovery Score" have={recovery.nightsUsed} need={RECOVERY_BASELINE_TARGET} />
-      )}
-
-      <WorkoutRecommender recovery={recovery.score} />
-
-      <section className="rounded border border-black/[.08] p-4 dark:border-white/[.145]">
-        <h2 className="mb-3 font-medium">Energy Bank &amp; Stress</h2>
-        {chartData.length === 0 ? (
-          <p className="text-sm text-foreground/60">No intraday data yet today.</p>
-        ) : (
-          <StressBatteryChart data={chartData} />
-        )}
-      </section>
+      <WidgetGrid keys={widgetKeys} data={widgetData} />
 
       <JournalDrawer
         today={today}

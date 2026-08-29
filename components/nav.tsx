@@ -9,6 +9,8 @@ const LINKS = [
   { href: "/sleep", label: "Sleep" },
   { href: "/activity", label: "Activity" },
   { href: "/vitals", label: "Vitals" },
+  { href: "/trends", label: "Trends" },
+  { href: "/biological-age", label: "Bio Age" },
   { href: "/settings", label: "Settings" },
 ] as const;
 

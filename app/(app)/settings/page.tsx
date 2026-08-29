@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/format";
+import { ProfileForm } from "@/components/settings/profile-form";
 
 export default async function SettingsPage({
   searchParams,
@@ -9,7 +10,7 @@ export default async function SettingsPage({
   const { connected, error } = await searchParams;
   const { supabase, user } = await requireUser();
 
-  const [{ data: tokenRow }, { data: lastSync }] = await Promise.all([
+  const [{ data: tokenRow }, { data: lastSync }, { data: profile }] = await Promise.all([
     supabase.from("google_oauth_tokens").select("updated_at").eq("user_id", user.id).maybeSingle(),
     supabase
       .from("sync_log")
@@ -18,6 +19,7 @@ export default async function SettingsPage({
       .order("started_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
   ]);
 
   return (
@@ -63,6 +65,14 @@ export default async function SettingsPage({
         ) : (
           <p className="text-sm text-foreground/60">No syncs have run yet.</p>
         )}
+      </section>
+
+      <section className="flex flex-col gap-2 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+        <h2 className="font-medium">Profile</h2>
+        <ProfileForm
+          initialDateOfBirth={profile?.date_of_birth ?? null}
+          initialBiologicalSex={(profile?.biological_sex as "male" | "female" | null) ?? null}
+        />
       </section>
     </main>
   );

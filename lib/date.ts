@@ -67,3 +67,17 @@ export function localDayStartIso(dateString: string): string {
 export function localDayEndIso(dateString: string): string {
   return localDayStartIso(nextDayString(dateString));
 }
+
+/** Whole years elapsed between a YYYY-MM-DD date of birth and a YYYY-MM-DD reference date. */
+export function ageInYears(dob: string, asOfDate: string): number {
+  const birth = new Date(`${dob}T12:00:00`);
+  const asOf = new Date(`${asOfDate}T12:00:00`);
+
+  let age = asOf.getFullYear() - birth.getFullYear();
+  const birthdayPassed =
+    asOf.getMonth() > birth.getMonth() ||
+    (asOf.getMonth() === birth.getMonth() && asOf.getDate() >= birth.getDate());
+  if (!birthdayPassed) age -= 1;
+
+  return age;
+}
