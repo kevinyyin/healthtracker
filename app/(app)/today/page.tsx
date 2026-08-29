@@ -10,6 +10,7 @@ import { computeEnergyBank } from "@/lib/analytics/energy-bank";
 import { computeStressTimeline } from "@/lib/analytics/stress-score";
 import { computeHabitCorrelations, type JournalDay, type OutcomeDay } from "@/lib/analytics/habit-correlations";
 import { computeBiologicalAge, type BiologicalSex } from "@/lib/analytics/biological-age";
+import { excludedDatesFromPeriods } from "@/lib/activity-status";
 import { DEFAULT_WIDGET_KEYS, isWidgetKey, type WidgetKey } from "@/lib/dashboard-widgets";
 import { WidgetGrid, type WidgetData } from "@/components/dashboard/widget-grid";
 import { CustomizeDrawer } from "@/components/dashboard/customize-drawer";
@@ -37,6 +38,7 @@ export default async function TodayPage() {
     { data: journalRows },
     { data: profile },
     { data: widgetsRow },
+    { data: statusRows },
   ] = await Promise.all([
     supabase
       .from("health_logs")
@@ -64,10 +66,13 @@ export default async function TodayPage() {
       .order("date", { ascending: true }),
     supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
     supabase.from("dashboard_widgets").select("widget_keys").eq("user_id", user.id).maybeSingle(),
+    supabase.from("activity_status_periods").select("status, started_on, ended_on").eq("user_id", user.id),
   ]);
 
   const storedKeys = (widgetsRow?.widget_keys ?? []).filter(isWidgetKey);
   const widgetKeys: WidgetKey[] = storedKeys.length > 0 ? storedKeys : DEFAULT_WIDGET_KEYS;
+
+  const excludedDates = excludedDatesFromPeriods(statusRows ?? [], today);
 
   // health_logs numeric columns come back as strings from PostgREST — coerce once here.
   const logs = (healthLogRows ?? []).map((l) => ({
@@ -79,7 +84,7 @@ export default async function TodayPage() {
   }));
 
   const tonight: NightlyMetrics = logs[0] ?? { date: today, hrv_rmssd: null, resting_hr: null };
-  const recovery = computeRecoveryScore(logs, tonight);
+  const recovery = computeRecoveryScore(logs, tonight, excludedDates);
 
   const intraday = (intradayRows ?? []).map((s) => ({
     recorded_at: s.recorded_at,
@@ -117,12 +122,12 @@ export default async function TodayPage() {
   // needed as habit-correlation outcomes.
   const ascLogs = [...logs].reverse();
   const outcomes: OutcomeDay[] = ascLogs.map((day, i) => {
-    const dayRecovery = computeRecoveryScore(ascLogs.slice(0, i), day);
+    const dayRecovery = computeRecoveryScore(ascLogs.slice(0, i), day, excludedDates);
     return { date: day.date, recovery: dayRecovery.score, deepSleepMinutes: day.deep_sleep_minutes };
   });
 
   const journalDays: JournalDay[] = (journalRows ?? []).map((j) => ({ date: j.date, habits: j.habits }));
-  const correlations = computeHabitCorrelations(journalDays, outcomes);
+  const correlations = computeHabitCorrelations(journalDays, outcomes, excludedDates);
 
   const bioAgeLogs = (bioAgeLogRows ?? []).map((l) => ({
     date: l.date,
@@ -137,6 +142,7 @@ export default async function TodayPage() {
         today,
         ageInYears(profile.date_of_birth, today),
         profile.biological_sex as BiologicalSex,
+        excludedDates,
       )
     : null;
 

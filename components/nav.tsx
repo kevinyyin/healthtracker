@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { StatusToggle } from "@/components/status-toggle";
+import type { ActivityStatus } from "@/lib/activity-status";
 
 const LINKS = [
   { href: "/today", label: "Today" },
@@ -14,7 +16,7 @@ const LINKS = [
   { href: "/settings", label: "Settings" },
 ] as const;
 
-export function Nav() {
+export function Nav({ currentStatus }: { currentStatus: ActivityStatus }) {
   const pathname = usePathname();
 
   return (
@@ -37,7 +39,10 @@ export function Nav() {
           );
         })}
       </div>
-      <ThemeToggle />
+      <div className="flex items-center gap-1">
+        <StatusToggle currentStatus={currentStatus} />
+        <ThemeToggle />
+      </div>
     </nav>
   );
 }

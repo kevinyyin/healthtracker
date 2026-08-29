@@ -35,8 +35,16 @@ function mean(values: number[]): number {
  *
  * Every result is gated at a minimum group size and labeled "low" confidence, never
  * implying more statistical rigor than a handful of data points can support.
+ *
+ * Days in `excludedDates` (e.g. flagged Sick/Injured/Traveling via
+ * lib/activity-status.ts) are skipped entirely — either as the habit-day or as the
+ * next-day outcome — since an atypical day confounds the comparison either way.
  */
-export function computeHabitCorrelations(journal: JournalDay[], outcomes: OutcomeDay[]): HabitCorrelation[] {
+export function computeHabitCorrelations(
+  journal: JournalDay[],
+  outcomes: OutcomeDay[],
+  excludedDates?: Set<string>,
+): HabitCorrelation[] {
   const outcomeByDate = new Map(outcomes.map((o) => [o.date, o]));
   const allHabits = new Set(journal.flatMap((j) => j.habits));
 
@@ -48,6 +56,8 @@ export function computeHabitCorrelations(journal: JournalDay[], outcomes: Outcom
       const withoutValues: number[] = [];
 
       for (const day of journal) {
+        if (excludedDates?.has(day.date) || excludedDates?.has(nextDayString(day.date))) continue;
+
         // Habits are logged for a date; their effect is measured on the NEXT day's outcome.
         const outcome = outcomeByDate.get(nextDayString(day.date));
         const value = outcomeKey === "recovery" ? outcome?.recovery : outcome?.deepSleepMinutes;
