@@ -16,7 +16,7 @@ export function Nav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center justify-between border-b border-black/[.08] px-4 py-3 dark:border-white/[.145]">
+    <nav className="flex items-center justify-between border-b border-black/[.08] px-4 pb-3 dark:border-white/[.145] [padding-top:calc(0.75rem+env(safe-area-inset-top))]">
       <div className="hidden gap-1 md:flex">
         {LINKS.map(({ href, label }) => {
           const active = pathname === href;
