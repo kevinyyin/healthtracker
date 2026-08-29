@@ -13,6 +13,24 @@ interface TokenRow {
 
 const EXPIRY_SAFETY_MARGIN_MS = 5 * 60 * 1000;
 
+/**
+ * Supabase/PostgREST errors (and other plain error-shaped objects) aren't `instanceof
+ * Error`, so the naive `err.message` check silently falls through to `String(err)` —
+ * which stringifies an object as the useless "[object Object]". Try a `message` field
+ * before giving up to a full JSON dump.
+ */
+export function describeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object" && "message" in err && typeof err.message === "string") {
+    return err.message;
+  }
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
 /** Returns a live access token for the row, refreshing it first if it's near expiry. */
 async function getValidAccessToken(admin: SupabaseClient, token: TokenRow): Promise<string> {
   const expiresAt = new Date(token.expires_at).getTime();
@@ -80,7 +98,7 @@ export async function syncUser(admin: SupabaseClient, token: TokenRow) {
       .update({
         finished_at: new Date().toISOString(),
         status: "error",
-        error: err instanceof Error ? err.message : String(err),
+        error: describeError(err),
       })
       .eq("id", logRow.id);
     throw err;

@@ -27,5 +27,8 @@ export async function listDataPoints(
     throw new Error(`Google Health API request failed (${response.status}): ${await response.text()}`);
   }
 
-  return response.json() as Promise<GoogleHealthDataPointsResponse>;
+  // Google omits `dataPoints` entirely (rather than returning []) when a data type has
+  // no points in the requested range, so default it — callers rely on it always being an array.
+  const body = (await response.json()) as Partial<GoogleHealthDataPointsResponse>;
+  return { dataPoints: body.dataPoints ?? [], nextPageToken: body.nextPageToken };
 }
