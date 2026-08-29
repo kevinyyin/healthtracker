@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Gear, Heartbeat, House, Moon, PersonSimpleRun } from "@phosphor-icons/react";
 
 const TABS = [
-  { href: "/today", label: "Today", icon: House },
+  { href: "/today", label: "Home", icon: House },
   { href: "/sleep", label: "Sleep", icon: Moon },
   { href: "/activity", label: "Activity", icon: PersonSimpleRun },
   { href: "/vitals", label: "Vitals", icon: Heartbeat },
