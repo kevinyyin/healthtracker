@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/supabase/server";
 import { daysBefore, localDayEndIso, localDayStartIso, todayLocalDateString } from "@/lib/date";
+import { formatDate } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeRecoveryScore, type NightlyMetrics } from "@/lib/analytics/recovery-score";
 import { computeDayStrain, type HrSample } from "@/lib/analytics/day-strain";
@@ -64,6 +65,12 @@ export default async function TodayPage() {
   const last3Nights = logs.slice(0, 3).map((l) => ({ date: l.date, total_sleep_minutes: l.total_sleep_minutes }));
   const sleepTarget = computeSleepTarget(last3Nights, dayStrain.strain);
 
+  const lastNightSleepMinutes = logs[0]?.total_sleep_minutes;
+  const sleepScore =
+    lastNightSleepMinutes != null
+      ? Math.max(0, Math.min(100, Math.round((lastNightSleepMinutes / sleepTarget.targetMinutes) * 100)))
+      : null;
+
   const energyTimeline = intraday.map((s) => ({ minute: s.recorded_at, bpm: s.bpm, activeCalories: null }));
   const battery = computeEnergyBank(energyTimeline, recovery.score ?? DEFAULT_START_BATTERY);
 
@@ -94,9 +101,15 @@ export default async function TodayPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Today</h1>
+      <h1 className="text-2xl font-semibold">{formatDate(today)}</h1>
 
-      <HeroHeader recovery={recovery} strain={dayStrain.strain} battery={currentBattery} sleepTarget={sleepTarget} />
+      <HeroHeader
+        recovery={recovery}
+        strain={dayStrain.strain}
+        battery={currentBattery}
+        sleepTarget={sleepTarget}
+        sleepScore={sleepScore}
+      />
 
       {recovery.confidence !== "full" && (
         <BaselineProgress label="Recovery Score" have={recovery.nightsUsed} need={RECOVERY_BASELINE_TARGET} />
@@ -104,7 +117,7 @@ export default async function TodayPage() {
 
       <WorkoutRecommender recovery={recovery.score} />
 
-      <section>
+      <section className="rounded border border-black/[.08] p-4 dark:border-white/[.145]">
         <h2 className="mb-3 font-medium">Energy Bank &amp; Stress</h2>
         {chartData.length === 0 ? (
           <p className="text-sm text-foreground/60">No intraday data yet today.</p>

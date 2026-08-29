@@ -1,6 +1,7 @@
 "use client";
 
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { SLEEP_STAGE_COLORS } from "@/lib/chart-colors";
 
 export interface SleepStageNight {
   date: string;
@@ -24,10 +25,10 @@ export function SleepStageChart({ nights }: { nights: SleepStageNight[] }) {
             contentStyle={{ background: "var(--background)", border: "1px solid rgba(128,128,128,0.3)", fontSize: 12 }}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="deep" stackId="sleep" fill="#3b5bdb" name="Deep" />
-          <Bar dataKey="rem" stackId="sleep" fill="#7048e8" name="REM" />
-          <Bar dataKey="light" stackId="sleep" fill="#4dabf7" name="Light" />
-          <Bar dataKey="awake" stackId="sleep" fill="#adb5bd" name="Awake" />
+          <Bar dataKey="deep" stackId="sleep" fill={SLEEP_STAGE_COLORS.deep} name="Deep" />
+          <Bar dataKey="rem" stackId="sleep" fill={SLEEP_STAGE_COLORS.rem} name="REM" />
+          <Bar dataKey="light" stackId="sleep" fill={SLEEP_STAGE_COLORS.light} name="Light" />
+          <Bar dataKey="awake" stackId="sleep" fill={SLEEP_STAGE_COLORS.awake} name="Awake" />
         </BarChart>
       </ResponsiveContainer>
     </div>

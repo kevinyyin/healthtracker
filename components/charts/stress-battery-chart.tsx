@@ -1,6 +1,7 @@
 "use client";
 
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { BATTERY_COLOR, STRESS_COLOR } from "@/lib/chart-colors";
 
 export interface StressBatteryPoint {
   minute: string;
@@ -34,8 +35,8 @@ export function StressBatteryChart({ data }: { data: StressBatteryPoint[] }) {
             type="monotone"
             dataKey="battery"
             name="Energy Bank"
-            stroke="#4f9dff"
-            fill="#4f9dff"
+            stroke={BATTERY_COLOR}
+            fill={BATTERY_COLOR}
             fillOpacity={0.15}
           />
           <Line
@@ -43,7 +44,7 @@ export function StressBatteryChart({ data }: { data: StressBatteryPoint[] }) {
             type="monotone"
             dataKey="stress"
             name="Stress"
-            stroke="#ef4444"
+            stroke={STRESS_COLOR}
             dot={false}
             connectNulls
           />
