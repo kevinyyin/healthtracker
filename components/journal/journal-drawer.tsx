@@ -138,8 +138,12 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
                 <ul className="flex flex-col gap-1 text-sm text-foreground/70">
                   {insights.map((c, i) => (
                     <li key={i}>
-                      {c.habit}: {c.outcome === "recovery" ? "Recovery" : "Deep sleep"} {c.effect >= 0 ? "+" : ""}
-                      {c.outcome === "recovery" ? `${c.effect.toFixed(1)}%` : `${Math.round(c.effect)}min`} (n=
+                      {c.habit}: {c.outcome === "recovery" ? "Recovery" : "Deep sleep"}{" "}
+                      <span className={`figure ${c.effect >= 0 ? "text-success" : "text-danger"}`}>
+                        {c.effect >= 0 ? "+" : ""}
+                        {c.outcome === "recovery" ? `${c.effect.toFixed(1)}%` : `${Math.round(c.effect)}min`}
+                      </span>{" "}
+                      (n=
                       {c.nWith})
                     </li>
                   ))}

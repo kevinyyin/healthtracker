@@ -100,7 +100,12 @@ export default async function BiologicalAgePage() {
       </div>
 
       {result.confidence !== "full" && (
-        <BaselineProgress label="Biological Age" have={result.nightsUsed} need={FULL_CONFIDENCE_NIGHTS} />
+        <BaselineProgress
+          label="Biological Age"
+          have={result.nightsUsed}
+          need={FULL_CONFIDENCE_NIGHTS}
+          color={RING_COLORS.bioAge}
+        />
       )}
 
       {result.factors.length > 0 && (

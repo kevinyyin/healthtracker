@@ -65,7 +65,12 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
               <h2 id="customize-drawer-title" className="text-lg font-semibold">
                 Customize Dashboard
               </h2>
-              <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost btn-icon" aria-label="Close">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="btn btn-ghost btn-icon min-h-11 min-w-11"
+                aria-label="Close"
+              >
                 <X size={16} weight="bold" />
               </button>
             </div>
@@ -86,7 +91,7 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
                         type="button"
                         onClick={() => move(i, -1)}
                         disabled={i === 0}
-                        className="btn btn-ghost btn-icon !p-2"
+                        className="btn btn-ghost btn-icon min-h-11 min-w-11"
                         aria-label="Move up"
                       >
                         &uarr;
@@ -95,12 +100,17 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
                         type="button"
                         onClick={() => move(i, 1)}
                         disabled={i === keys.length - 1}
-                        className="btn btn-ghost btn-icon !p-2"
+                        className="btn btn-ghost btn-icon min-h-11 min-w-11"
                         aria-label="Move down"
                       >
                         &darr;
                       </button>
-                      <button type="button" onClick={() => remove(key)} className="btn btn-ghost btn-icon !p-2" aria-label={`Remove ${widgetLabel(key)}`}>
+                      <button
+                        type="button"
+                        onClick={() => remove(key)}
+                        className="btn btn-ghost btn-icon min-h-11 min-w-11"
+                        aria-label={`Remove ${widgetLabel(key)}`}
+                      >
                         <X size={14} />
                       </button>
                     </div>
