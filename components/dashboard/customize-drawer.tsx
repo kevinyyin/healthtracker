@@ -4,9 +4,11 @@ import { useState, useTransition } from "react";
 import { X } from "@phosphor-icons/react";
 import { saveDashboardWidgets } from "@/lib/actions/dashboard-widgets";
 import { WIDGET_CATALOG, widgetLabel, type WidgetKey } from "@/lib/dashboard-widgets";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 
 export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
   const [open, setOpen] = useState(false);
+  const panelRef = useDialogA11y(open, () => setOpen(false));
   const [keys, setKeys] = useState<WidgetKey[]>(initialKeys);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -51,11 +53,18 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
           onClick={() => setOpen(false)}
         >
           <div
-            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-[var(--border)] bg-surface p-6 shadow-2xl sm:rounded-3xl"
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="customize-drawer-title"
+            tabIndex={-1}
+            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-[var(--border)] bg-surface p-6 shadow-2xl outline-none sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Customize Dashboard</h2>
+              <h2 id="customize-drawer-title" className="text-lg font-semibold">
+                Customize Dashboard
+              </h2>
               <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost btn-icon" aria-label="Close">
                 <X size={16} weight="bold" />
               </button>

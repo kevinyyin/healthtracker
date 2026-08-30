@@ -15,7 +15,7 @@ export function BaselineProgress({ label, have, need, compact = false }: Baselin
         <div className="h-1 w-full rounded-full bg-[var(--border)]">
           <div className="h-1 rounded-full bg-accent transition-[width] duration-500 ease-out" style={{ width: `${pct}%` }} />
         </div>
-        <p className="text-xs text-foreground/50">
+        <p className="text-xs text-foreground/70">
           {have} of {need} days
         </p>
       </div>
