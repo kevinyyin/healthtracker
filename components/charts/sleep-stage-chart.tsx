@@ -22,7 +22,14 @@ export function SleepStageChart({ nights }: { nights: SleepStageNight[] }) {
           <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.4} />
           <YAxis tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.4} unit="m" />
           <Tooltip
-            contentStyle={{ background: "var(--background)", border: "1px solid rgba(128,128,128,0.3)", fontSize: 12 }}
+            contentStyle={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              fontSize: 12,
+              fontFamily: "var(--font-mono)",
+              boxShadow: "var(--shadow-card)",
+            }}
           />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="deep" stackId="sleep" fill={SLEEP_STAGE_COLORS.deep} name="Deep" />

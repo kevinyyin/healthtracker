@@ -41,44 +41,35 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="rounded border border-black/[.08] px-3 py-1.5 text-sm transition-[background-color,transform] active:scale-[0.98] dark:border-white/[.145]"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn btn-outline btn-sm">
         Customize
       </button>
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end bg-black/40 sm:items-center sm:justify-center"
+          className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm sm:items-center sm:justify-center"
           onClick={() => setOpen(false)}
         >
           <div
-            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-lg border border-black/[.08] bg-background p-6 sm:rounded-lg dark:border-white/[.145]"
+            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-[var(--border)] bg-surface p-6 shadow-2xl sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Customize Dashboard</h2>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded p-1 text-foreground/60 transition-colors hover:bg-black/[.04] active:scale-[0.98] dark:hover:bg-white/[.08]"
-                aria-label="Close"
-              >
+              <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost btn-icon" aria-label="Close">
                 <X size={16} weight="bold" />
               </button>
             </div>
 
-            <h3 className="mb-2 text-sm font-medium text-foreground/70">Your widgets</h3>
+            <h3 className="eyebrow mb-2">Your widgets</h3>
             {keys.length === 0 ? (
               <p className="mb-4 text-sm text-foreground/60">No widgets — add some below.</p>
             ) : (
-              <ul className="mb-4 flex flex-col gap-1">
+              <ul className="mb-4 flex flex-col gap-1.5">
                 {keys.map((key, i) => (
                   <li
                     key={key}
-                    className="flex items-center justify-between rounded border border-black/[.08] px-3 py-2 text-sm dark:border-white/[.145]"
+                    className="flex items-center justify-between rounded-xl border border-[var(--border)] px-3 py-2 text-sm"
                   >
                     <span>{widgetLabel(key)}</span>
                     <div className="flex items-center gap-1 -mr-2">
@@ -86,7 +77,7 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
                         type="button"
                         onClick={() => move(i, -1)}
                         disabled={i === 0}
-                        className="rounded p-2.5 text-foreground/60 transition-colors hover:bg-black/[.04] disabled:opacity-30 dark:hover:bg-white/[.08]"
+                        className="btn btn-ghost btn-icon !p-2"
                         aria-label="Move up"
                       >
                         &uarr;
@@ -95,17 +86,12 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
                         type="button"
                         onClick={() => move(i, 1)}
                         disabled={i === keys.length - 1}
-                        className="rounded p-2.5 text-foreground/60 transition-colors hover:bg-black/[.04] disabled:opacity-30 dark:hover:bg-white/[.08]"
+                        className="btn btn-ghost btn-icon !p-2"
                         aria-label="Move down"
                       >
                         &darr;
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => remove(key)}
-                        className="rounded p-2.5 text-foreground/60 transition-colors hover:bg-black/[.04] dark:hover:bg-white/[.08]"
-                        aria-label={`Remove ${widgetLabel(key)}`}
-                      >
+                      <button type="button" onClick={() => remove(key)} className="btn btn-ghost btn-icon !p-2" aria-label={`Remove ${widgetLabel(key)}`}>
                         <X size={14} />
                       </button>
                     </div>
@@ -116,15 +102,11 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
 
             {available.length > 0 && (
               <>
-                <h3 className="mb-2 text-sm font-medium text-foreground/70">Add a widget</h3>
+                <h3 className="eyebrow mb-2">Add a widget</h3>
                 <ul className="mb-4 flex flex-wrap gap-2">
                   {available.map((w) => (
                     <li key={w.key}>
-                      <button
-                        type="button"
-                        onClick={() => add(w.key)}
-                        className="rounded-full border border-black/[.08] px-3 py-1.5 text-sm transition-[background-color,transform] active:scale-[0.98] dark:border-white/[.145]"
-                      >
+                      <button type="button" onClick={() => add(w.key)} className="chip">
                         + {w.label}
                       </button>
                     </li>
@@ -133,12 +115,7 @@ export function CustomizeDrawer({ initialKeys }: { initialKeys: WidgetKey[] }) {
               </>
             )}
 
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isPending}
-              className="w-full rounded bg-foreground px-4 py-2 text-sm text-background transition-transform active:scale-[0.98] disabled:opacity-50"
-            >
+            <button type="button" onClick={handleSave} disabled={isPending} className="btn btn-primary w-full">
               {isPending ? "Saving..." : saved ? "Saved" : "Save"}
             </button>
           </div>

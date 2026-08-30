@@ -4,9 +4,9 @@ export function WorkoutRecommender({ recovery }: { recovery: number | null }) {
   const target = recommendTargetStrain(recovery);
 
   return (
-    <div className="h-full rounded border border-black/[.08] p-4 dark:border-white/[.145]">
-      <p className="text-sm text-foreground/60">Target Strain</p>
-      <p className="text-2xl font-semibold tabular-nums">
+    <div className="card h-full p-4">
+      <p className="eyebrow">Target Strain</p>
+      <p className="figure mt-1 text-2xl font-semibold">
         {target.min.toFixed(1)}-{target.max.toFixed(1)}
       </p>
       <p className="text-sm text-foreground/60">{target.label}</p>

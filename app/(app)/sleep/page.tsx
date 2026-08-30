@@ -49,15 +49,19 @@ export default async function SleepPage() {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Sleep</h1>
+      <div>
+        <p className="eyebrow mb-1">Recovery</p>
+        <h1 className="text-3xl font-semibold tracking-tight">Sleep</h1>
+      </div>
+      <div className="divider -mt-4" />
 
       {nights.length > 0 && (
-        <section>
+        <section className="card p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-medium">Sleep stages</h2>
-            <p className="text-sm text-foreground/60">
-              Sleep debt: {Math.round(sleepTarget.debtMinutes)}min · Target tonight:{" "}
-              {Math.floor(sleepTarget.targetMinutes / 60)}h {Math.round(sleepTarget.targetMinutes % 60)}m
+            <p className="figure text-sm text-foreground/60">
+              Debt {Math.round(sleepTarget.debtMinutes)}min · Target {Math.floor(sleepTarget.targetMinutes / 60)}h{" "}
+              {Math.round(sleepTarget.targetMinutes % 60)}m
             </p>
           </div>
           <SleepStageChart nights={nights} />
@@ -70,7 +74,7 @@ export default async function SleepPage() {
           hint="Once your Fitbit is connected and syncing, sleep sessions will show up here."
         />
       ) : (
-        <ul className="flex flex-col divide-y divide-black/[.08] dark:divide-white/[.145]">
+        <ul className="stagger-children flex flex-col divide-y divide-[var(--border)]">
           {sessions.map((session) => (
             <li key={session.id} className="flex items-center justify-between py-3">
               <div>
@@ -79,9 +83,7 @@ export default async function SleepPage() {
                   {formatDateTime(session.start_time)} - {formatDateTime(session.end_time)}
                 </p>
               </div>
-              <p className="text-lg font-semibold tabular-nums">
-                {formatDuration(session.start_time, session.end_time)}
-              </p>
+              <p className="figure text-lg font-semibold">{formatDuration(session.start_time, session.end_time)}</p>
             </li>
           ))}
         </ul>

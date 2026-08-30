@@ -12,13 +12,15 @@ export function BioAgeTeaser({ result }: { result: BiologicalAgeResult | null })
   return (
     <Link
       href={result == null ? "/settings" : "/biological-age"}
-      className="flex h-full items-center justify-between rounded border border-black/[.08] p-4 transition-colors hover:bg-black/[.02] dark:border-white/[.145] dark:hover:bg-white/[.04]"
+      className="card card-interactive group flex h-full items-center justify-between p-4"
     >
       <div>
-        <p className="text-sm text-foreground/60">Biological Age</p>
-        <p className="text-sm font-medium">{label}</p>
+        <p className="eyebrow">Biological Age</p>
+        <p className="mt-1 text-sm font-medium">{label}</p>
       </div>
-      <span className="text-foreground/40">&rarr;</span>
+      <span className="shrink-0 text-foreground/40 transition-transform duration-300 group-hover:translate-x-0.5">
+        &rarr;
+      </span>
     </Link>
   );
 }

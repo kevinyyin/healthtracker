@@ -31,15 +31,18 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4">
-      <h1 className="text-2xl font-semibold">Sign in</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div>
+        <p className="eyebrow mb-1">Private Access</p>
+        <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
+      </div>
+      <form onSubmit={handleSubmit} className="card flex flex-col gap-4 p-6">
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="rounded border border-gray-300 px-3 py-2"
+          className="field"
         />
         <input
           type="password"
@@ -47,14 +50,10 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="rounded border border-gray-300 px-3 py-2"
+          className="field"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-        >
+        {error && <p className="text-sm text-danger">{error}</p>}
+        <button type="submit" disabled={loading} className="btn btn-primary">
           {loading ? "Signing in..." : "Sign in"}
         </button>
       </form>

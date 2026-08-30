@@ -3,19 +3,34 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --accent: #2563eb;
-  --success: #0f7a3d;
-  --success-bg: #ecfdf3;
-  --danger: #b3261e;
-  --danger-bg: #fef3f2;
+  --background: #f7f5f1;
+  --surface: #fffefc;
+  --foreground: #1c1b19;
+  --border: rgba(28, 27, 25, 0.1);
+  --accent: #3f5344;
+  --accent-foreground: #f7f5f1;
+  --brass: #a9834f;
+  --success: #3f6b4a;
+  --success-bg: #e7eee4;
+  --danger: #9c4a3c;
+  --danger-bg: #f5e9e4;
+  --shadow-card: 0 1px 2px rgba(28, 27, 25, 0.05), 0 14px 32px -18px rgba(28, 27, 25, 0.22);
+  --shadow-card-hover: 0 1px 2px rgba(28, 27, 25, 0.06), 0 24px 40px -18px rgba(28, 27, 25, 0.28);
+  --shadow-button: 0 10px 22px -12px rgba(28, 27, 25, 0.4);
+
+  --ease-spa: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 150ms;
+  --duration-base: 380ms;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-border: var(--border);
   --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-brass: var(--brass);
   --color-success: var(--success);
   --color-success-bg: var(--success-bg);
   --color-danger: var(--danger);
@@ -26,24 +41,38 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --accent: #5b8def;
-    --success: #4ade80;
-    --success-bg: #0f2e1c;
-    --danger: #f87171;
-    --danger-bg: #3a1414;
+    --background: #15140f;
+    --surface: #1d1b16;
+    --foreground: #eee9e0;
+    --border: rgba(238, 233, 224, 0.12);
+    --accent: #86ac82;
+    --accent-foreground: #15140f;
+    --brass: #cba467;
+    --success: #7bb37f;
+    --success-bg: rgba(123, 179, 127, 0.14);
+    --danger: #d98a72;
+    --danger-bg: rgba(217, 138, 114, 0.14);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 32px -18px rgba(0, 0, 0, 0.6);
+    --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.45), 0 24px 40px -18px rgba(0, 0, 0, 0.68);
+    --shadow-button: 0 10px 24px -12px rgba(0, 0, 0, 0.65);
   }
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --accent: #5b8def;
-  --success: #4ade80;
-  --success-bg: #0f2e1c;
-  --danger: #f87171;
-  --danger-bg: #3a1414;
+  --background: #15140f;
+  --surface: #1d1b16;
+  --foreground: #eee9e0;
+  --border: rgba(238, 233, 224, 0.12);
+  --accent: #86ac82;
+  --accent-foreground: #15140f;
+  --brass: #cba467;
+  --success: #7bb37f;
+  --success-bg: rgba(123, 179, 127, 0.14);
+  --danger: #d98a72;
+  --danger-bg: rgba(217, 138, 114, 0.14);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 32px -18px rgba(0, 0, 0, 0.6);
+  --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.45), 0 24px 40px -18px rgba(0, 0, 0, 0.68);
+  --shadow-button: 0 10px 24px -12px rgba(0, 0, 0, 0.65);
 }
 
 body {
@@ -53,12 +82,12 @@ body {
 }
 
 /*
- * Global keyboard-focus indicator. Uses --accent (otherwise unused in this
- * grayscale-first system) so focus reads as a distinct system signal, not a
- * data color or the invert-based "primary action" treatment. Browsers clip
- * the outline to the element's own border-radius automatically, and
- * :focus-visible only fires for keyboard/programmatic focus, so it never
- * fights the active:scale-[0.98] press feedback used on click.
+ * Global keyboard-focus indicator. Uses --accent — the system's one deliberate
+ * color, otherwise spent only on the ring signature, chart data, and hover
+ * accents — so focus reads as a distinct system signal, not a generic default.
+ * Browsers clip the outline to the element's own border-radius automatically,
+ * and :focus-visible only fires for keyboard/programmatic focus, so it never
+ * fights the active:scale press feedback used on click.
  */
 :focus-visible {
   outline: 2px solid var(--accent);
@@ -72,4 +101,221 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+@layer components {
+  /* Card: warm surface lifted off the stone background, hairline edge, soft ambient shadow. */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-interactive {
+    transition:
+      transform var(--duration-base) var(--ease-spa),
+      box-shadow var(--duration-base) var(--ease-spa),
+      border-color var(--duration-base) var(--ease-spa);
+  }
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: color-mix(in oklab, var(--accent) 35%, var(--border));
+  }
+
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--foreground) 55%, transparent);
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--brass) 0%, var(--border) 22%, var(--border) 100%);
+    opacity: 0.7;
+  }
+
+  .figure {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Buttons: pill-shaped, spa-damper easing, restrained to grayscale so the
+     accent color stays spent on the ring signature and chart data alone. */
+  .btn {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.375rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    overflow: hidden;
+    cursor: pointer;
+    transition:
+      transform var(--duration-base) var(--ease-spa),
+      box-shadow var(--duration-base) var(--ease-spa),
+      background-color var(--duration-fast) var(--ease-spa),
+      border-color var(--duration-fast) var(--ease-spa),
+      color var(--duration-fast) var(--ease-spa),
+      opacity var(--duration-fast) var(--ease-spa);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn:not(:disabled):active {
+    transform: scale(0.96);
+    transition-duration: 90ms;
+  }
+
+  .btn-primary {
+    background: var(--foreground);
+    color: var(--background);
+    box-shadow: var(--shadow-button);
+  }
+  .btn-primary::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.28) 48%, transparent 66%);
+    transform: translateX(-130%);
+    transition: transform 650ms var(--ease-spa);
+  }
+  .btn-primary:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+  .btn-primary:not(:disabled):hover::before {
+    transform: translateX(130%);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--foreground);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:not(:disabled):hover {
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
+    background: color-mix(in oklab, var(--accent) 6%, transparent);
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: color-mix(in oklab, var(--foreground) 68%, transparent);
+  }
+  .btn-ghost:not(:disabled):hover {
+    background: color-mix(in oklab, var(--foreground) 6%, transparent);
+    color: var(--foreground);
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+  }
+  .btn-icon {
+    padding: 0.5rem;
+    border-radius: 999px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    background: transparent;
+    color: var(--foreground);
+    cursor: pointer;
+    transition:
+      transform var(--duration-base) var(--ease-spa),
+      box-shadow var(--duration-base) var(--ease-spa),
+      background-color var(--duration-fast) var(--ease-spa),
+      border-color var(--duration-fast) var(--ease-spa),
+      color var(--duration-fast) var(--ease-spa);
+  }
+  .chip:hover {
+    border-color: color-mix(in oklab, var(--accent) 40%, var(--border));
+  }
+  .chip:active {
+    transform: scale(0.96);
+  }
+  .chip-active {
+    background: var(--foreground);
+    color: var(--background);
+    border-color: var(--foreground);
+  }
+  .chip-active:hover {
+    border-color: var(--foreground);
+  }
+
+  .field {
+    border-radius: 0.875rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    transition:
+      border-color var(--duration-fast) var(--ease-spa),
+      background-color var(--duration-fast) var(--ease-spa);
+  }
+  .field:hover {
+    border-color: color-mix(in oklab, var(--foreground) 25%, var(--border));
+  }
+  .field:focus-visible {
+    border-color: var(--accent);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-children > * {
+  animation: rise-in var(--duration-base) var(--ease-spa) both;
+}
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-children > *:nth-child(2) {
+  animation-delay: 40ms;
+}
+.stagger-children > *:nth-child(3) {
+  animation-delay: 80ms;
+}
+.stagger-children > *:nth-child(4) {
+  animation-delay: 120ms;
+}
+.stagger-children > *:nth-child(5) {
+  animation-delay: 160ms;
+}
+.stagger-children > *:nth-child(6) {
+  animation-delay: 200ms;
+}
+.stagger-children > *:nth-child(7) {
+  animation-delay: 240ms;
+}
+.stagger-children > *:nth-child(8) {
+  animation-delay: 280ms;
+}
+.stagger-children > *:nth-child(n + 9) {
+  animation-delay: 320ms;
 }

@@ -163,18 +163,19 @@ export default async function TodayPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-16">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{formatDate(today)}</h1>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow mb-1">Recovery Reading</p>
+          <h1 className="text-3xl font-semibold tracking-tight">{formatDate(today)}</h1>
+        </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/trends"
-            className="rounded border border-black/[.08] px-3 py-1.5 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-white/[.08]"
-          >
+          <Link href="/trends" className="btn btn-outline btn-sm">
             Trends
           </Link>
           <CustomizeDrawer initialKeys={widgetKeys} />
         </div>
       </div>
+      <div className="divider -mt-4" />
 
       <WidgetGrid keys={widgetKeys} data={widgetData} />
 

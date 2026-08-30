@@ -28,7 +28,14 @@ export function StressBatteryChart({ data }: { data: StressBatteryPoint[] }) {
             opacity={0.4}
           />
           <Tooltip
-            contentStyle={{ background: "var(--background)", border: "1px solid rgba(128,128,128,0.3)", fontSize: 12 }}
+            contentStyle={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              fontSize: 12,
+              fontFamily: "var(--font-mono)",
+              boxShadow: "var(--shadow-card)",
+            }}
           />
           <Area
             yAxisId="battery"
