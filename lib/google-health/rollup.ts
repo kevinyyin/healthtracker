@@ -14,46 +14,33 @@ interface StageMinutes {
 }
 
 /**
- * Best-effort parse of Google's sleep stage_summary jsonb — shape is unconfirmed until
- * real data lands. Tries a couple of plausible layouts, falls back to all-null stage
- * minutes (total sleep is still computed from start/end regardless) rather than throwing.
+ * Parses Google's sleep stage_summary jsonb — an array of `{ startTime, endTime, type }`
+ * stage segments (confirmed against the live API 2026-08-30: type is one of "AWAKE",
+ * "LIGHT", "DEEP", "REM"). Each stage's own duration isn't provided, so it's derived
+ * from its interval. Falls back to all-null stage minutes (total sleep is still computed
+ * from the session's own start/end regardless) rather than throwing on an unexpected shape.
  */
 function parseStageMinutes(stageSummary: unknown): StageMinutes {
   const fallback: StageMinutes = { deep: null, rem: null, light: null, awake: null };
-  if (!stageSummary || typeof stageSummary !== "object") return fallback;
-  const obj = stageSummary as Record<string, unknown>;
+  if (!Array.isArray(stageSummary)) return fallback;
 
-  if (typeof obj.deepMinutes === "number") {
-    return {
-      deep: obj.deepMinutes,
-      rem: typeof obj.remMinutes === "number" ? obj.remMinutes : null,
-      light: typeof obj.lightMinutes === "number" ? obj.lightMinutes : null,
-      awake: typeof obj.awakeMinutes === "number" ? obj.awakeMinutes : null,
-    };
+  const minutesByStage: Record<string, number> = {};
+  for (const entry of stageSummary) {
+    if (!entry || typeof entry !== "object") continue;
+    const { type, startTime, endTime } = entry as Record<string, unknown>;
+    if (typeof type !== "string" || typeof startTime !== "string" || typeof endTime !== "string") continue;
+    const minutes = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 60_000;
+    const key = type.toLowerCase();
+    minutesByStage[key] = (minutesByStage[key] ?? 0) + minutes;
   }
 
-  if (Array.isArray(obj.stages)) {
-    const minutesByStage: Record<string, number> = {};
-    for (const entry of obj.stages) {
-      if (!entry || typeof entry !== "object") continue;
-      const stage = (entry as Record<string, unknown>).stage;
-      const duration = (entry as Record<string, unknown>).durationMinutes;
-      if (typeof stage === "string" && typeof duration === "number") {
-        const key = stage.toLowerCase();
-        minutesByStage[key] = (minutesByStage[key] ?? 0) + duration;
-      }
-    }
-    if (Object.keys(minutesByStage).length > 0) {
-      return {
-        deep: minutesByStage.deep ?? null,
-        rem: minutesByStage.rem ?? null,
-        light: minutesByStage.light ?? null,
-        awake: minutesByStage.awake ?? null,
-      };
-    }
-  }
-
-  return fallback;
+  if (Object.keys(minutesByStage).length === 0) return fallback;
+  return {
+    deep: minutesByStage.deep ?? null,
+    rem: minutesByStage.rem ?? null,
+    light: minutesByStage.light ?? null,
+    awake: minutesByStage.awake ?? null,
+  };
 }
 
 function average(values: (number | null)[]): number | null {
