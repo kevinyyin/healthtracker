@@ -37,20 +37,38 @@ export async function syncActivity(admin: SupabaseClient, userId: string, access
   const { dataPoints } = await listDataPoints(accessToken, GOOGLE_HEALTH_DATA_TYPES.exercise);
   if (dataPoints.length === 0) return 0;
 
-  const rows = dataPoints.map((dp: GoogleHealthDataPoint) => ({
-    user_id: userId,
-    external_id: dp.name,
-    type: (dp.metadata?.activityType as string | undefined) ?? null,
-    start_time: dp.startTime,
-    end_time: dp.endTime,
-    steps: null,
-    // Shape unconfirmed — try metadata.calories first, fall back to the data point's
-    // own value in case Google encodes it there instead.
-    calories: extractNumericValue(dp.metadata?.calories) ?? extractNumericValue(dp.value),
-    distance_m: null,
-    raw: dp as unknown as Record<string, unknown>,
-    synced_at: new Date().toISOString(),
-  }));
+  // start_time/end_time are NOT NULL on activity_sessions, but the API response is only
+  // type-asserted, not runtime-validated (see listDataPoints) — some exercise data points
+  // (e.g. an in-progress session with no recorded end) omit one or both. Skip those rather
+  // than letting a single malformed point fail the whole batched upsert and take down the
+  // rest of this user's sync (sleep/HR run in the same Promise.all in sync.ts).
+  const rows = dataPoints
+    .filter((dp: GoogleHealthDataPoint) => {
+      const valid = Boolean(dp.startTime) && Boolean(dp.endTime);
+      if (!valid) {
+        console.error(`syncActivity: skipping ${dp.name} — missing start_time or end_time`, {
+          startTime: dp.startTime,
+          endTime: dp.endTime,
+        });
+      }
+      return valid;
+    })
+    .map((dp: GoogleHealthDataPoint) => ({
+      user_id: userId,
+      external_id: dp.name,
+      type: (dp.metadata?.activityType as string | undefined) ?? null,
+      start_time: dp.startTime,
+      end_time: dp.endTime,
+      steps: null,
+      // Shape unconfirmed — try metadata.calories first, fall back to the data point's
+      // own value in case Google encodes it there instead.
+      calories: extractNumericValue(dp.metadata?.calories) ?? extractNumericValue(dp.value),
+      distance_m: null,
+      raw: dp as unknown as Record<string, unknown>,
+      synced_at: new Date().toISOString(),
+    }));
+
+  if (rows.length === 0) return 0;
 
   const { error } = await admin.from("activity_sessions").upsert(rows, { onConflict: "user_id,external_id" });
   if (error) throw error;
