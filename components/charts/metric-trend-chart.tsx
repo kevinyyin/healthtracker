@@ -19,7 +19,14 @@ export function MetricTrendChart({ data, label }: { data: TrendPoint[]; label: s
           <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={40} stroke="currentColor" opacity={0.4} />
           <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.4} />
           <Tooltip
-            contentStyle={{ background: "var(--background)", border: "1px solid rgba(128,128,128,0.3)", fontSize: 12 }}
+            contentStyle={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: 12,
+              fontSize: 12,
+              fontFamily: "var(--font-mono)",
+              boxShadow: "var(--shadow-card)",
+            }}
           />
           <Line type="monotone" dataKey="value" name={label} stroke={METRIC_TREND_COLOR} dot={false} connectNulls />
         </LineChart>

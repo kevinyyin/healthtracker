@@ -14,7 +14,11 @@ export default async function ActivityPage() {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Activity</h1>
+      <div>
+        <p className="eyebrow mb-1">Exertion</p>
+        <h1 className="text-3xl font-semibold tracking-tight">Activity</h1>
+      </div>
+      <div className="divider -mt-4" />
 
       {!sessions || sessions.length === 0 ? (
         <EmptyState
@@ -22,7 +26,7 @@ export default async function ActivityPage() {
           hint="Once your Fitbit is connected and syncing, workouts and steps will show up here."
         />
       ) : (
-        <ul className="flex flex-col divide-y divide-black/[.08] dark:divide-white/[.145]">
+        <ul className="stagger-children flex flex-col divide-y divide-[var(--border)]">
           {sessions.map((session) => (
             <li key={session.id} className="flex items-center justify-between py-3">
               <div>
@@ -38,9 +42,7 @@ export default async function ActivityPage() {
                     .join(" · ")}
                 </p>
               </div>
-              <p className="text-lg font-semibold tabular-nums">
-                {formatDuration(session.start_time, session.end_time)}
-              </p>
+              <p className="figure text-lg font-semibold">{formatDuration(session.start_time, session.end_time)}</p>
             </li>
           ))}
         </ul>

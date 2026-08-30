@@ -103,7 +103,7 @@ export function AlarmForm({ initialAlarm, subscriptionCount }: AlarmFormProps) {
               setWakeFrom(e.target.value);
               setSaved(false);
             }}
-            className="rounded border border-black/[.08] bg-transparent px-3 py-2 text-sm dark:border-white/[.145]"
+            className="field"
           />
         </label>
         <label className="flex flex-1 flex-col gap-1 text-sm">
@@ -115,23 +115,18 @@ export function AlarmForm({ initialAlarm, subscriptionCount }: AlarmFormProps) {
               setWakeTo(e.target.value);
               setSaved(false);
             }}
-            className="rounded border border-black/[.08] bg-transparent px-3 py-2 text-sm dark:border-white/[.145]"
+            className="field"
           />
         </label>
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={isPending || !wakeFrom || !wakeTo}
-        className="w-fit rounded bg-foreground px-4 py-2 text-sm text-background transition-transform active:scale-[0.98] disabled:opacity-50"
-      >
+      <button type="button" onClick={handleSave} disabled={isPending || !wakeFrom || !wakeTo} className="btn btn-primary w-fit">
         {isPending ? "Saving..." : saved ? "Saved" : "Save"}
       </button>
 
-      <div className="mt-2 flex flex-col gap-2 border-t border-black/[.08] pt-3 dark:border-white/[.145]">
+      <div className="mt-2 flex flex-col gap-2 border-t border-[var(--border)] pt-3">
         <p className="text-sm">
           {pushStatus === "subscribed"
             ? `Notifications enabled (${subscriptionCount} device${subscriptionCount === 1 ? "" : "s"}).`
@@ -139,12 +134,7 @@ export function AlarmForm({ initialAlarm, subscriptionCount }: AlarmFormProps) {
         </p>
 
         {pushStatus !== "subscribed" && (
-          <button
-            type="button"
-            onClick={handleEnablePush}
-            disabled={pushStatus === "requesting"}
-            className="w-fit rounded border border-black/[.08] px-4 py-2 text-sm transition-transform active:scale-[0.98] disabled:opacity-50 dark:border-white/[.145]"
-          >
+          <button type="button" onClick={handleEnablePush} disabled={pushStatus === "requesting"} className="btn btn-outline w-fit">
             {pushStatus === "requesting" ? "Requesting..." : "Enable notifications on this device"}
           </button>
         )}
@@ -174,13 +164,7 @@ export function AlarmForm({ initialAlarm, subscriptionCount }: AlarmFormProps) {
 
 function EnabledToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded px-3 py-1 text-sm transition-[background-color,transform] active:scale-[0.98] ${
-        active ? "bg-foreground text-background" : "border border-black/[.08] dark:border-white/[.145]"
-      }`}
-    >
+    <button type="button" onClick={onClick} className={`chip ${active ? "chip-active" : ""}`}>
       {label}
     </button>
   );

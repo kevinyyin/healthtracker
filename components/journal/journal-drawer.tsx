@@ -54,32 +54,22 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="w-fit rounded border border-black/[.08] px-4 py-2 text-sm transition-[background-color,transform] active:scale-[0.98] dark:border-white/[.145]"
-      >
+      <button type="button" onClick={() => setOpen(true)} className="btn btn-outline w-fit">
         Log habits
       </button>
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end bg-black/40 sm:items-center sm:justify-center"
+          className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm sm:items-center sm:justify-center"
           onClick={() => setOpen(false)}
         >
-          {/* Overlay sheet is the one exception to the app's `rounded` (sm) radius scale. */}
           <div
-            className="w-full max-w-md rounded-t-lg border border-black/[.08] bg-background p-6 sm:rounded-lg dark:border-white/[.145]"
+            className="w-full max-w-md rounded-t-3xl border border-[var(--border)] bg-surface p-6 shadow-2xl sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Daily Habits</h2>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded p-1 text-foreground/60 transition-colors hover:bg-black/[.04] active:scale-[0.98] dark:hover:bg-white/[.08]"
-                aria-label="Close"
-              >
+              <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost btn-icon" aria-label="Close">
                 <X size={16} weight="bold" />
               </button>
             </div>
@@ -95,11 +85,7 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
                   key={habit}
                   type="button"
                   onClick={() => toggleHabit(habit)}
-                  className={`rounded-full px-3 py-1.5 text-sm transition-[background-color,transform] active:scale-[0.98] ${
-                    habits.includes(habit)
-                      ? "bg-foreground text-background"
-                      : "border border-black/[.08] dark:border-white/[.145]"
-                  }`}
+                  className={`chip ${habits.includes(habit) ? "chip-active" : ""}`}
                 >
                   {habit}
                 </button>
@@ -118,13 +104,9 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
                     addCustomHabit();
                   }
                 }}
-                className="flex-1 rounded border border-black/[.08] bg-transparent px-3 py-2 text-sm dark:border-white/[.145]"
+                className="field flex-1"
               />
-              <button
-                type="button"
-                onClick={addCustomHabit}
-                className="rounded border border-black/[.08] px-3 py-2 text-sm transition-transform active:scale-[0.98] dark:border-white/[.145]"
-              >
+              <button type="button" onClick={addCustomHabit} className="btn btn-outline btn-sm">
                 Add
               </button>
             </div>
@@ -134,21 +116,16 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
-              className="mb-4 w-full rounded border border-black/[.08] bg-transparent px-3 py-2 text-sm dark:border-white/[.145]"
+              className="field mb-4 w-full"
             />
 
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isPending}
-              className="w-full rounded bg-foreground px-4 py-2 text-sm text-background transition-transform active:scale-[0.98] disabled:opacity-50"
-            >
+            <button type="button" onClick={handleSave} disabled={isPending} className="btn btn-primary w-full">
               {isPending ? "Saving..." : saved ? "Saved" : "Save"}
             </button>
 
             {insights.length > 0 && (
-              <div className="mt-6 border-t border-black/[.08] pt-4 dark:border-white/[.145]">
-                <h3 className="mb-2 text-sm font-medium">Insights</h3>
+              <div className="mt-6 border-t border-[var(--border)] pt-4">
+                <h3 className="eyebrow mb-2">Insights</h3>
                 <ul className="flex flex-col gap-1 text-sm text-foreground/70">
                   {insights.map((c, i) => (
                     <li key={i}>
@@ -169,13 +146,7 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
 
 function DateToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded px-3 py-1 text-sm transition-[background-color,transform] active:scale-[0.98] ${
-        active ? "bg-foreground text-background" : "border border-black/[.08] dark:border-white/[.145]"
-      }`}
-    >
+    <button type="button" onClick={onClick} className={`chip ${active ? "chip-active" : ""}`}>
       {label}
     </button>
   );

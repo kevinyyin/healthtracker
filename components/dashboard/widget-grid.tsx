@@ -36,7 +36,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
   switch (key) {
     case "strain_ring":
       return (
-        <div className="flex h-full items-center justify-center rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+        <div className="card flex h-full items-center justify-center p-4">
           <ScoreRing
             value={data.strain / STRAIN_MAX}
             display={data.strain.toFixed(1)}
@@ -48,7 +48,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
       );
     case "recovery_ring":
       return (
-        <div className="flex h-full flex-col items-center justify-center gap-3 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+        <div className="card flex h-full flex-col items-center justify-center gap-3 p-4">
           <ScoreRing
             value={data.recovery.score != null ? data.recovery.score / 100 : null}
             display={data.recovery.score != null ? `${Math.round(data.recovery.score)}%` : "-"}
@@ -68,7 +68,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
       );
     case "sleep_ring":
       return (
-        <div className="flex h-full items-center justify-center rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+        <div className="card flex h-full items-center justify-center p-4">
           <ScoreRing
             value={data.sleepScore != null ? data.sleepScore / 100 : null}
             display={data.sleepScore != null ? `${data.sleepScore}%` : "-"}
@@ -98,8 +98,8 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
       );
     case "energy_stress_chart":
       return (
-        <section className="rounded border border-black/[.08] p-4 dark:border-white/[.145]">
-          <h2 className="mb-3 font-medium">Energy Bank &amp; Stress</h2>
+        <section className="card p-4">
+          <h2 className="mb-3 eyebrow">Energy Bank &amp; Stress</h2>
           {data.chartData.length === 0 ? (
             <p className="text-sm text-foreground/60">No intraday data yet today.</p>
           ) : (
@@ -112,7 +112,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
 
 export function WidgetGrid({ keys, data }: { keys: WidgetKey[]; data: WidgetData }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+    <div className="stagger-children grid grid-cols-2 gap-4 sm:grid-cols-3">
       {keys.map((key) => (
         <div key={key} className={WIDE_KEYS.has(key) ? "col-span-2 sm:col-span-3" : undefined}>
           {renderWidget(key, data)}

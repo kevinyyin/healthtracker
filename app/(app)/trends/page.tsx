@@ -75,7 +75,11 @@ export default async function TrendsPage({
   if (logs.length === 0) {
     return (
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-16">
-        <h1 className="text-2xl font-semibold">Trends</h1>
+        <div>
+          <p className="eyebrow mb-1">History</p>
+          <h1 className="text-3xl font-semibold tracking-tight">Trends</h1>
+        </div>
+        <div className="divider -mt-4" />
         <EmptyState
           title="No history yet"
           hint="Once you have a few days of synced data, historical trends will show up here."
@@ -96,7 +100,11 @@ export default async function TrendsPage({
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Trends</h1>
+      <div>
+        <p className="eyebrow mb-1">History</p>
+        <h1 className="text-3xl font-semibold tracking-tight">Trends</h1>
+      </div>
+      <div className="divider -mt-4" />
 
       <div className="flex flex-wrap gap-1">
         {METRICS.map((m) => (
@@ -122,7 +130,9 @@ export default async function TrendsPage({
       ) : !hasData ? (
         <EmptyState title="Not enough data yet" hint="Keep syncing — this metric needs a few more days of history." />
       ) : (
-        <MetricTrendChart data={displayPoints} label={metric.label} />
+        <div className="card p-4">
+          <MetricTrendChart data={displayPoints} label={metric.label} />
+        </div>
       )}
     </main>
   );
@@ -168,7 +178,5 @@ function computeSeries(
 }
 
 function tabClass(active: boolean): string {
-  return `rounded px-3 py-1.5 text-sm font-medium transition-colors ${
-    active ? "bg-foreground text-background" : "border border-black/[.08] hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-white/[.08]"
-  }`;
+  return `chip ${active ? "chip-active" : ""}`;
 }

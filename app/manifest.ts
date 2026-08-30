@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Personal health and recovery tracker, backed by Google Health data.",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#2563eb",
+    background_color: "#f7f5f1",
+    theme_color: "#1c1b19",
     icons: [{ src: "/icon", sizes: "512x512", type: "image/png" }],
   };
 }

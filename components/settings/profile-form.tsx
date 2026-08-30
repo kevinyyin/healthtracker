@@ -39,7 +39,7 @@ export function ProfileForm({ initialDateOfBirth, initialBiologicalSex }: Profil
             setDateOfBirth(e.target.value);
             setSaved(false);
           }}
-          className="rounded border border-black/[.08] bg-transparent px-3 py-2 text-sm dark:border-white/[.145]"
+          className="field"
         />
       </label>
 
@@ -71,7 +71,7 @@ export function ProfileForm({ initialDateOfBirth, initialBiologicalSex }: Profil
         type="button"
         onClick={handleSave}
         disabled={isPending || !dateOfBirth || !biologicalSex}
-        className="w-fit rounded bg-foreground px-4 py-2 text-sm text-background transition-transform active:scale-[0.98] disabled:opacity-50"
+        className="btn btn-primary w-fit"
       >
         {isPending ? "Saving..." : saved ? "Saved" : "Save"}
       </button>
@@ -89,13 +89,7 @@ export function ProfileForm({ initialDateOfBirth, initialBiologicalSex }: Profil
 
 function SexToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded px-3 py-1 text-sm transition-[background-color,transform] active:scale-[0.98] ${
-        active ? "bg-foreground text-background" : "border border-black/[.08] dark:border-white/[.145]"
-      }`}
-    >
+    <button type="button" onClick={onClick} className={`chip ${active ? "chip-active" : ""}`}>
       {label}
     </button>
   );

@@ -1,23 +1,28 @@
 ---
 name: Health Tracker
-description: A grayscale-first personal recovery dashboard where color is reserved strictly for data.
+description: A Swiss spa/clinic instrument system — warm stone surfaces, one disciplined accent, every reading rendered like a calibrated gauge.
 colors:
-  background: "#ffffff"
-  foreground: "#171717"
-  accent: "#2563eb"
-  success: "#0f7a3d"
-  success-bg: "#ecfdf3"
-  danger: "#b3261e"
-  danger-bg: "#fef3f2"
-  gauge-blue: "#2563eb"
-  alert-amber: "#f59e0b"
-  trace-violet: "#7c3aed"
-  chrono-gray: "#94a3b8"
-  metric-teal: "#0d9488"
-  sleep-deep: "#1d4ed8"
-  sleep-rem: "#3b82f6"
-  sleep-light: "#93c5fd"
-  sleep-awake: "#94a3b8"
+  background: "#f7f5f1"
+  surface: "#fffefc"
+  foreground: "#1c1b19"
+  border: "rgba(28, 27, 25, 0.1)"
+  accent: "#3f5344"
+  accent-foreground: "#f7f5f1"
+  brass: "#a9834f"
+  success: "#3f6b4a"
+  success-bg: "#e7eee4"
+  danger: "#9c4a3c"
+  danger-bg: "#f5e9e4"
+  basin-blue: "#5c7a8c"
+  brass-gold: "#b8925a"
+  clay: "#bf7a54"
+  plum: "#8c6478"
+  chrono-gray: "#a39a8c"
+  metric-teal: "#52847c"
+  sleep-deep: "#3d5d73"
+  sleep-rem: "#5a85a0"
+  sleep-light: "#9cc0ce"
+  sleep-awake: "#b9afa1"
 typography:
   body:
     fontFamily: "var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif"
@@ -26,181 +31,176 @@ typography:
     fontFamily: "var(--font-geist-mono)"
     fontFeature: "tabular-nums"
 rounded:
-  sm: "4px"
+  field: "0.875rem"
+  card: "1.25rem"
+  sheet: "1.5rem"
   full: "9999px"
-  sheet: "8px"
 spacing:
   xs: "4px"
   sm: "8px"
   md: "16px"
   lg: "24px"
   xl: "32px"
+motion:
+  ease: "cubic-bezier(0.22, 1, 0.36, 1)"
+  duration-fast: "150ms"
+  duration-base: "380ms"
 components:
   button-primary:
     backgroundColor: "{colors.foreground}"
     textColor: "{colors.background}"
-    rounded: "{rounded.sm}"
-    padding: "8px 16px"
-  button-primary-active:
-    backgroundColor: "{colors.foreground}"
-    textColor: "{colors.background}"
-    rounded: "{rounded.sm}"
-    padding: "8px 16px"
+    rounded: "{rounded.full}"
+    padding: "10px 22px"
+  button-outline:
+    backgroundColor: "transparent"
+    textColor: "{colors.foreground}"
+    border: "1px solid {colors.border}"
+    rounded: "{rounded.full}"
+    padding: "10px 22px"
   button-ghost:
     backgroundColor: "transparent"
     textColor: "{colors.foreground}"
-    rounded: "{rounded.sm}"
-    padding: "8px 12px"
+    rounded: "{rounded.full}"
+    padding: "8px 16px"
   card:
-    backgroundColor: "{colors.background}"
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.foreground}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.card}"
     padding: "16px"
+    shadow: "0 1px 2px rgba(28,27,25,.05), 0 14px 32px -18px rgba(28,27,25,.22)"
   chip-toggle:
     backgroundColor: "transparent"
     textColor: "{colors.foreground}"
     rounded: "{rounded.full}"
-    padding: "6px 12px"
+    padding: "6px 14px"
 ---
 
 # Design System: Health Tracker
 
 ## Overview
 
-**Creative North Star: "The Quiet Instrument Panel"**
+**Creative North Star: "The Instrument Room"**
 
-Health Tracker reads like a calibrated instrument panel, not a consumer wellness app: near-grayscale surfaces, hairline borders standing in for shadows, and color deployed only where it encodes a specific measurement (a sleep stage, a stress reading, a biological-age delta). Nothing on screen is decorative — every colored pixel is data, every border is a boundary between two pieces of information, and every number renders in tabular figures so a reading can be scanned and compared at a glance the way a dial would be.
-
-The system is evolving from a bare-bones first pass toward a slightly warmer, still-minimal register: **precise and unhurried**. That means interactive states get a touch more tactile feedback than today's near-invisible hovers, and corners are allowed to soften a little beyond the current 4px default in new work — but the panel stays quiet. This is a personal daily-glance tool for one person checking their own recovery numbers, not a surface that needs to persuade or delight a stranger. Confidence comes from restraint, not embellishment.
+Health Tracker reads like the reception room of a private Swiss spa/clinic — warm stone surfaces, a single restrained accent, every reading rendered like a calibrated instrument. This is a from-the-ground-up successor to the earlier "Quiet Instrument Panel" system: it keeps that system's core discipline (grayscale-first chrome, tabular numerals, one color per metric, restraint over decoration) but trades the bare, flat, cold-neutral first pass for warm materials, soft ambient elevation, and considered motion — the difference between a spec sheet and a room someone would pay a premium membership to sit in.
 
 **Key Characteristics:**
-- Grayscale-first surfaces; color is reserved exclusively for data encoding, never decoration.
-- Hairline borders (`black/[.08]` light, `white/[.145]` dark) instead of shadows for all resting surfaces.
-- Every numeric reading uses tabular figures so values align in a fixed-width column.
-- Primary actions invert foreground/background rather than reaching for a brand color.
-- One flat grid of cards on mobile-first, centered single-column layouts on every page.
+- Warm stone/ivory surfaces, never cold gray or pure black/white — `--background`/`--surface`/`--foreground` all carry a warm cast in both themes.
+- Cards are lifted off the page with a soft ambient shadow (`--shadow-card`) and a hairline border, not flat-bordered-only.
+- One accent color (`--accent`, a deep pine/moss green) spent deliberately: the keyboard-focus ring, the ring signature's glow, and interactive-card/chip hover — never smeared across buttons or chrome.
+- Primary actions still invert foreground/background (unchanged from the prior system) — buttons stay disciplined grayscale so the one accent color reads as a signal, not decoration.
+- Every numeric reading renders in Geist Mono, tabular, letting a score read like a gauge digit rather than body prose.
+- Motion is a first-class material: a "spa damper" ease (`cubic-bezier(0.22, 1, 0.36, 1)`) drives button lift/press, a sheen sweep on filled buttons, and a staggered rise-in on card grids.
 
 ## Colors
 
-The palette is almost entirely neutral; the only saturated colors in the system are functional and each is bound to exactly one measurement.
-
 ### Primary
-- **Foreground/Background Invert** (`#171717` on `#ffffff`, light / `#ededed` on `#0a0a0a`, dark): the only "primary action" color in the system. Buttons, active nav items, and selected toggles invert the page's own foreground and background rather than introducing a brand hue — this **is** the primary color, expressed as inversion rather than pigment.
+- **Foreground/Background Invert** (`#1c1b19` on `#f7f5f1`, light / `#eee9e0` on `#15140f`, dark): still the only "primary action" color, per the inherited Invert-Don't-Tint Rule. Buttons, active nav items, and selected chips invert the page's own foreground/background.
 
-### Secondary
-- **Gauge Blue** (`#2563eb`): the Sleep ring, Energy Bank metric, and stress-battery chart's "battery" series. Named for its resemblance to a panel gauge needle; this is the closest thing the system has to a brand accent, and it appears only on sleep/energy data, never as UI chrome.
+### Accent
+- **Pine** (`--accent`: `#3f5344` light / `#86ac82` dark): the system's one deliberate hue. Used for the keyboard-focus ring, the ring signature's ambient glow, and the hover state of interactive cards/chips/outline buttons. Never used for button fills or chart data — see Named Rules.
+- **Brass** (`--brass`: `#a9834f` light / `#cba467` dark): a fine metallic accent for the ring signature's tick marks and header dividers only. Never a fill color.
 
-### Tertiary
-- **Alert Amber** (`#f59e0b`): the Strain ring and the stress-battery chart's "stress" series — the one warm color in the system, reserved for exertion/stress readings.
-- **Trace Violet** (`#7c3aed`): biological-age readings exclusively (the Bio Age ring/teaser, the bio-age line in trend charts).
+### Data (one reading, one color — inherited rule, retinted warm)
+- **Basin Blue** (`#5c7a8c`): the Sleep ring, Energy Bank metric, and stress-battery chart's "battery" series.
+- **Brass Gold** (`#b8925a`): the Strain ring and the stress-battery chart's "stress" series.
+- **Plum** (`#8c6478`): biological-age readings exclusively.
+- **Clay / Metric Teal / Chrono Gray**: reserved for future single-metric trend lines; Metric Teal (`#52847c`) is the generic Trends-page line color, Chrono Gray (`#a39a8c`) is the dashed chronological-age reference line.
+- **Sleep stages**: `sleep-deep` `#3d5d73` → `sleep-awake` `#b9afa1`, one tonal family from deep basin-blue to warm stone gray.
 
 ### Neutral
-- **Panel White / Near-Black** (`--background`: `#ffffff` light, `#0a0a0a` dark): page and card background.
-- **Ink / Paper** (`--foreground`: `#171717` light, `#ededed` dark): body text, borders derive their opacity from this value.
-- **Hairline** (`black/[.08]` light, `white/[.145]` dark): the single border color used for every card, divider, and input outline in the system, at two fixed opacities per theme.
-- **Muted Label** (`foreground/50` and `foreground/60`): secondary text — metric labels, sub-captions, helper copy. Two steps only; do not introduce a third opacity level.
-- **Recovery Success Green** (`--success` `#0f7a3d` light / `#4ade80` dark, on `--success-bg` `#ecfdf3` / `#0f2e1c`): the Recovery ring, and confirmation banners (e.g. "Google Health connected").
-- **Danger Red** (`--danger` `#b3261e` light / `#f87171` dark, on `--danger-bg` `#fef3f2` / `#3a1414`): error banners and validation text only.
-
-### System Chrome
-- **Accent Blue** (`--accent`: `#2563eb` light / `#5b8def` dark): the global `:focus-visible` keyboard-focus ring (`app/globals.css`), and nothing else. This is `--accent`'s one deliberate use — it marks focus as a distinct system signal, separate from both the invert-based primary-action treatment and the data colors above. It is still not a general-purpose brand/UI color: don't reach for it for buttons, links, or chip chrome — the invert pattern owns "primary," and this token owns keyboard focus.
+- **Stone / Ink-black** (`--background`: `#f7f5f1` light, `#15140f` dark): page background.
+- **Surface** (`--surface`: `#fffefc` light, `#1d1b16` dark): card/section background, one step lighter (light mode) or lighter-still (dark mode) than the page, so cards read as lifted material rather than flush-with-page.
+- **Ink / Ivory** (`--foreground`: `#1c1b19` light, `#eee9e0` dark): body text.
+- **Hairline** (`--border`, warm-tinted rgba of the foreground at low opacity): the border color for every card, divider, and input outline.
+- **Muted Label** (`foreground/50` and `foreground/60`, plus the new `.eyebrow` utility for tracked-out uppercase labels): secondary text.
+- **Recovery Success Green** (`--success` `#3f6b4a` light / `#7bb37f` dark, on `--success-bg`): the Recovery ring, and confirmation banners.
+- **Danger Terracotta** (`--danger` `#9c4a3c` light / `#d98a72` dark, on `--danger-bg`): error banners and validation text — retinted from the old system's red to a warm brick tone that fits the stone/clay palette.
 
 ### Named Rules
-**The Invert-Don't-Tint Rule.** Primary actions signal importance by inverting foreground/background, never by introducing a brand color. If something needs to look "primary," make it the opposite of the page, not a different hue.
+**The Invert-Don't-Tint Rule.** Unchanged from the prior system: primary actions invert foreground/background rather than reaching for a brand color.
 
-**The One Reading, One Color Rule.** Gauge Blue, Alert Amber, Trace Violet, and the sleep-stage blues each belong to exactly one metric family. Never reuse a data color for a second, unrelated metric — a reader should be able to identify what's being measured from color alone.
+**The One Reading, One Color Rule.** Unchanged: each data color belongs to exactly one metric family.
+
+**The One Accent, Three Jobs Rule** *(new)*: `--accent` (Pine) does exactly three things system-wide — keyboard focus, the ring signature's glow, and the hover accent on interactive cards/chips/outline buttons. It is still not a general button-fill or chrome color; that restraint is what keeps a warm, elevated system from reading as a generic SaaS product.
 
 ## Typography
 
-**Body Font:** Geist Sans (with `ui-sans-serif, system-ui, sans-serif` fallback)
-**Numeric Font:** Geist Mono is loaded but current numeric display actually uses Geist Sans set to `tabular-nums` (not a monospace switch) — treat tabular-nums as the operative rule, and reserve Geist Mono itself for a future dedicated data-readout context if one arises.
+**Body Font:** Geist Sans.
+**Numeric Font:** Geist Mono, tabular — **now actually used**, not deferred. Every rendered measurement (ring center value, MetricCard value, chart axis ticks, tooltip figures) sets the `.figure` utility (`font-mono`, `tabular-nums`, tight tracking), reinforcing the instrument-gauge read the old system aspired to but stopped short of.
 
-**Character:** A single, quiet sans throughout — no display face, no serif accent. All emphasis comes from size and weight steps, not font changes. This keeps the instrument-panel read: one typeface, calibrated markings.
+**Labels:** Section/eyebrow labels use the new `.eyebrow` utility — `0.6875rem`, uppercase, `0.14em` tracking — for a masthead/engraved-plate quality above page titles and card groups.
 
 ### Hierarchy
-- **Title** (semibold, `text-2xl`/24px): page headers only — one per page (e.g. "Sleep", "Settings", the formatted date on Today).
-- **Section Label** (medium, `text-lg`/18px or default 16px): card/section headings within a page (e.g. "Google Health", "Energy Bank & Stress").
-- **Body** (regular, `text-sm`/14px): all standard copy, form labels, list items.
-- **Metric Display** (semibold, `text-lg` to `text-3xl` depending on prominence, `tabular-nums`): the actual numbers — ring center values, MetricCard values. Always tabular so digits don't shift width as they update.
-- **Caption** (regular, `text-xs`/12px, `foreground/50`): sub-labels under metrics, helper text, fine print.
+- **Title** (semibold–light, `text-2xl`–`text-3xl`): page headers, tight tracking.
+- **Eyebrow** (`.eyebrow`): optional small tracked-out label above a title or section.
+- **Section Label** (medium, 16–18px): card/section headings.
+- **Body** (regular, 14px): standard copy, form labels, list items.
+- **Metric Display** (`.figure`, semibold, scales with prominence): ring values, MetricCard values.
+- **Caption** (regular, 12px, `foreground/50`): sub-labels, helper text.
 
 ### Named Rules
-**The Tabular Numbers Rule.** Any rendered measurement (score, HRV, heart rate, minutes, percentage) sets `tabular-nums`. A reading must never shift the layout around it as its value changes.
+**The Tabular Numbers Rule.** Unchanged, now implemented via `.figure` (Geist Mono) rather than `tabular-nums` on the body face.
 
 ## Layout
 
-Single-column, centered, mobile-first. Every page body is `mx-auto max-w-2xl` (Today, with its widget grid, is the one exception at `max-w-3xl`) with `px-4 py-16` and a vertical rhythm of `gap-6` to `gap-8` between sections — there is no sidebar and no multi-column desktop layout beyond the widget grid itself.
-
-The Today dashboard's widget grid is `grid-cols-2` (mobile) → `sm:grid-cols-3` (desktop), with wide widgets (charts) spanning the full row via `col-span-2`/`col-span-3`. Because the widget set is user-customizable (add/remove/reorder), every widget must render correctly at both the standard single-cell size and the full-width wide size — never assume a fixed neighbor.
-
-Navigation is dual-mode by breakpoint: a top bar with inline text links + the status/theme toggles on desktop (`md:` and up), and a fixed bottom tab bar with icon+label on mobile — both read the same active route. Bottom tab bar reserves `env(safe-area-inset-bottom)` and the page body reserves matching padding, since the installed iOS home-screen app is a first-class target, not a responsive afterthought.
-
-### Named Rules
-**The Fixed-Width Reading Rule.** No page exceeds `max-w-3xl`. This is a personal dashboard read at arm's length, not a document meant to fill a monitor.
+Unchanged from the prior system: single-column, centered, mobile-first, `mx-auto max-w-2xl` (Today at `max-w-3xl`), `px-4 py-16`. See The Fixed-Width Reading Rule below.
 
 ## Elevation & Depth
 
-Flat by default. Every resting surface (card, section, input) uses a 1px hairline border instead of a shadow — there is no ambient elevation system, no `box-shadow` token used anywhere for structural depth. The one exception is transient overlays: the customize drawer and journal drawer use `shadow-lg` plus a `bg-black/40` backdrop scrim, because an overlay floating above the whole page is the one moment true elevation is warranted.
+**This is the system's biggest departure from its predecessor.** Resting cards now carry a soft ambient shadow (`--shadow-card`, warm-tinted, low-contrast) in addition to their hairline border — the old "Flat-by-Default Rule" is retired. The shadow is deliberately quiet: a 1px contact shadow plus a soft 14–32px spread at low opacity, meant to read as material lifted slightly off the stone background, not a UI-kit drop shadow. Interactive cards (`.card-interactive`) add a hover lift (`translateY(-2px)`) and a deeper shadow (`--shadow-card-hover`).
 
-### Shadow Vocabulary
-- **Overlay** (`shadow-lg`, paired with `bg-black/40` backdrop): drawers and modal sheets only. Never applied to a resting card.
+Overlays (drawers/modals) keep their own stronger elevation (`shadow-lg` + `bg-black/40` scrim) — now a difference of *degree* from resting cards rather than the only elevated surfaces in the system.
 
 ### Named Rules
-**The Flat-by-Default Rule.** If it's part of the page, it's flat and bordered. If it's floating above the page (drawer, modal), it gets a shadow and a backdrop. There is no third state.
+**The Quiet Shadow Rule** *(replaces the old Flat-by-Default Rule)*: every resting surface gets `--shadow-card`; every floating overlay gets something stronger. There is no more shadow-less flat state — the softest shadow tier is the new floor, not zero.
 
 ## Shapes
 
-Corners are small and consistent: the default Tailwind `rounded` (4px) on cards, buttons, inputs, and list rows. Pills (`rounded-full`) appear only for toggleable chip-style controls — the "add a widget" chips and the activity-status option list use the sharp `rounded` default, while selectable filter-style chips use full pill radius, so radius itself signals "chip you tap to toggle" versus "container." Drawer sheets get a slightly larger radius (`rounded-lg`/8px, `rounded-t-lg` on mobile's bottom-sheet edge) to read as a distinct floating layer rather than a flush card.
-
-As the system warms up per the Overview direction, new components may use a marginally larger radius (6–8px) than the historical 4px default — this is a permitted evolution, not a retroactive rule to reapply everywhere existing 4px corners already ship.
+Corners are now generous and warm rather than sharp: cards and sheets use `1.25rem`/`1.5rem` radius (`.card`, drawer sheets), buttons and chips are full pills, inputs use `0.875rem` (`.field`). This replaces the old 4px-default scale system-wide — there is no remaining 4px corner in the redesigned system.
 
 ## Components
 
-### Buttons
-- **Shape:** `rounded` (4px), full-width or `w-fit` depending on context.
-- **Primary:** `bg-foreground text-background`, `px-4 py-2`, `text-sm` — the invert pattern (see Colors → Named Rules). Used for the single primary action per section (Save, Connect Google Health).
-- **Ghost:** transparent background, `text-foreground/70`, hover `bg-black/[.04]` (dark: `bg-white/[.08]`) — used for icon buttons (theme toggle, close, reorder arrows) and secondary nav links.
-- **Bordered:** `border border-black/[.08]` (dark: `white/[.145]`), transparent fill — used for the "Customize" trigger and toggle-style buttons (biological-sex selector) in their unselected state.
-- **Press feedback:** every interactive button applies `active:scale-[0.98]` — the one universal motion cue in the system. Preserve it on every new button; it's the system's only press affordance today.
-- **Focus feedback:** every focusable element (buttons, links, chips, inputs) gets the same global `2px solid var(--accent)` ring with `2px` offset on `:focus-visible`, defined once in `app/globals.css` — never styled per-component. It only fires for keyboard/programmatic focus, so it never competes with the mouse-driven press-scale above.
+### Buttons (`.btn` + modifier)
+- **Shape:** full pill (`border-radius: 999px`), via the `.btn` base class in `app/globals.css`.
+- **Primary** (`.btn.btn-primary`): `bg-foreground`/`text-background`, the invert pattern, plus a diagonal sheen sweep on hover (`::before` gradient translate) and a 1px lift.
+- **Outline** (`.btn.btn-outline`): hairline border, hover fills faintly with the accent and lifts.
+- **Ghost** (`.btn.btn-ghost`): transparent, hover gets a faint foreground-tinted fill. Used for icon buttons and secondary chrome.
+- **Sizing:** `.btn-sm` for compact contexts, `.btn-icon` for square icon-only buttons.
+- **Press feedback:** `active:scale(0.96)` at a fast 90ms, defined once in `.btn:not(:disabled):active` — replaces the old per-className `active:scale-[0.98]` convention.
+- **Focus feedback:** unchanged global `2px solid var(--accent)` ring on `:focus-visible`.
 
-### Chips (toggles)
-- **Selectable pill** (`rounded-full`, bordered when unselected): "add a widget" catalog chips.
-- **Selected state:** `bg-foreground text-background`, same invert rule as buttons — a selected chip is visually identical to a primary button.
+### Chips (`.chip` / `.chip-active`)
+- Full pill, hairline border when unselected, invert fill when selected — same selected-state rule as buttons.
 
-### Cards / Containers
-- **Corner Style:** `rounded` (4px).
-- **Background:** `bg-background` (transparent-on-page for most cards, since the page background already matches).
-- **Shadow Strategy:** none — see Elevation & Depth. Depth comes entirely from the border.
-- **Border:** `border border-black/[.08]` dark: `border-white/[.145]`, on all four sides.
-- **Internal Padding:** `p-4` (16px) is the standard; sections on Settings use the same.
+### Cards / Containers (`.card`, `.card-interactive`)
+- **Corner Style:** `1.25rem`.
+- **Background:** `var(--surface)` — one step off the page background, unlike the old system's flush `bg-background`.
+- **Shadow:** `var(--shadow-card)` always; `.card-interactive` adds hover lift + deeper shadow.
+- **Border:** `1px solid var(--border)`.
+- **Internal Padding:** `p-4`–`p-6` depending on density.
 
-### Inputs / Fields
-- **Style:** `border border-black/[.08]` (dark: `white/[.145]`), `bg-transparent`, `rounded`, `px-3 py-2`, `text-sm`.
-- **Focus:** the global keyboard-focus ring (see Buttons → Focus feedback) — `2px solid var(--accent)`, `2px` offset, applied once via `:focus-visible` in `app/globals.css` rather than per-component.
-- **Disabled:** `opacity-50` on buttons; no distinct disabled input style yet observed.
+### Inputs / Fields (`.field`)
+- `0.875rem` radius, hairline border, hover darkens the border slightly, focus uses the global accent ring.
 
 ### Navigation
-- **Desktop top bar:** inline text links, `rounded px-3 py-1.5 text-sm font-medium`; active route gets the invert treatment (`bg-foreground text-background`), inactive gets `text-foreground/70` with ghost hover.
-- **Mobile bottom tab bar:** fixed, `Phosphor` icons at 22px, `weight="fill"` when active vs `"regular"` when inactive, 11px label beneath, active tint is full-opacity foreground vs `foreground/50` inactive. Safe-area-aware.
-- **Status/theme toggles:** live in the top bar only; small icon-first controls following the ghost-button treatment, with the activity-status control switching to the "selected chip" invert look when a non-default status is active.
+- Unchanged structurally from the prior system (desktop top bar / mobile bottom tab bar); restyled with the new pill/invert button language and warm palette.
 
-### Score Ring (signature component)
-The system's one true signature element: an SVG ring (96px, 8px stroke) with a `black/[.08]`-track and a colored progress arc in the metric's own data color (Gauge Blue for Sleep, Alert Amber for Strain, Success Green for Recovery, Trace Violet for Bio Age), rounded line-cap, center value in tabular-nums, label and optional sub-caption beneath. This is the closest the system has to a "brand mark" — any new metric that deserves top-level dashboard prominence should be expressed as a Score Ring using its own bound data color, not a new visual form.
+### Score Ring (signature component — retained and extended)
+Still the system's one true brand mark, now built out as a proper **instrument dial**: SVG ring (112px, 6px stroke), a `var(--border)`-tinted track, a colored progress arc in the metric's own data color with rounded line-cap, four fine brass tick marks at the compass points, a soft radial glow behind the ring tinted to the metric's own color, and the center value set in `.figure` (Geist Mono). Label uses `.eyebrow`. Any new metric earning dashboard prominence should extend this component, not invent a new visual form.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** bind every new data color to exactly one metric family and never reuse it elsewhere (see The One Reading, One Color Rule).
-- **Do** set `tabular-nums` on every rendered measurement, no exceptions.
-- **Do** use the foreground/background invert for any new primary action instead of reaching for `--accent` or a new hue.
-- **Do** keep every page body within `max-w-2xl` (or `max-w-3xl` for widget-grid pages) and centered.
-- **Do** treat the installed iOS home-screen context as first-class: respect `env(safe-area-inset-*)` in any new fixed-position chrome.
-- **Do** allow slightly larger radius (6–8px) and a touch more tactile hover/press feedback in new components, per the "precise and unhurried" direction — without introducing shadows on resting surfaces or new brand colors.
+- Bind every new data color to exactly one metric family (unchanged).
+- Set the `.figure` utility on every rendered measurement — the mono/tabular rule now has one canonical class rather than an ad hoc `tabular-nums`.
+- Use the foreground/background invert (`.btn-primary`) for primary actions; reach for `--accent` only in its three named jobs.
+- Keep every page body within `max-w-2xl`/`max-w-3xl`, centered.
+- Respect `env(safe-area-inset-*)` in fixed-position chrome.
+- Give every resting card `var(--shadow-card)` and every overlay something stronger — there's no shadow-less tier anymore.
 
 ### Don't:
-- **Don't** add a `box-shadow` to any resting card, section, or input — shadows are reserved for floating overlays only.
-- **Don't** introduce a new accent color for UI chrome (buttons, nav, chips); `--accent` is spoken for by the keyboard-focus ring, and general "primary" styling should invert instead.
-- **Don't** widen any page past `max-w-3xl` or introduce a desktop sidebar/multi-column layout — this is a single-reader instrument panel, not a document surface.
-- **Don't** style a widget assuming a specific neighbor or fixed grid position; the dashboard widget set is user-reorderable and any widget can end up full-width or single-cell.
-- **Don't** invent decorative color, illustration, or marketing-style imagery anywhere — every color must trace back to a specific measurement.
+- Don't introduce a second accent color for UI chrome — Pine's three jobs are the ceiling, Brass is decoration-only (ticks/dividers), never a fill.
+- Don't widen any page past `max-w-3xl` or add a desktop sidebar/multi-column layout.
+- Don't style a widget assuming a specific neighbor or fixed grid position — the dashboard widget set is user-reorderable.
+- Don't invent decorative color, illustration, or marketing-style imagery — every color must still trace back to a specific measurement or the accent's three named jobs.
+- Don't reach back for the old 4px radius or flat-bordered-only card style in new work — the warm/elevated system is the current baseline, not an optional variant.

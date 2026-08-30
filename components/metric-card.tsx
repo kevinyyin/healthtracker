@@ -1,9 +1,9 @@
 export function MetricCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="h-full rounded border border-black/[.08] p-4 dark:border-white/[.145]">
-      <p className="text-sm text-foreground/60">{label}</p>
-      <p className="text-3xl font-semibold tabular-nums">{value}</p>
-      {sub && <p className="text-xs text-foreground/50">{sub}</p>}
+    <div className="card h-full p-4">
+      <p className="eyebrow">{label}</p>
+      <p className="figure mt-1 text-3xl font-semibold">{value}</p>
+      {sub && <p className="mt-1 text-xs text-foreground/50">{sub}</p>}
     </div>
   );
 }

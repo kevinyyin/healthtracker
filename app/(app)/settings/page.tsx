@@ -28,18 +28,22 @@ export default async function SettingsPage({
 
   return (
     <main className="mx-auto flex max-w-md flex-col gap-6 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Settings</h1>
+      <div>
+        <p className="eyebrow mb-1">Account</p>
+        <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
+      </div>
+      <div className="divider -mt-4" />
 
       {connected === "1" && (
-        <p className="rounded bg-success-bg px-3 py-2 text-sm text-success">Google Health connected.</p>
+        <p className="rounded-2xl bg-success-bg px-4 py-3 text-sm text-success">Google Health connected.</p>
       )}
       {error && (
-        <p className="rounded bg-danger-bg px-3 py-2 text-sm text-danger">
+        <p className="rounded-2xl bg-danger-bg px-4 py-3 text-sm text-danger">
           Connection failed ({error}). Please try again.
         </p>
       )}
 
-      <section className="flex flex-col gap-2 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+      <section className="card flex flex-col gap-2 p-4">
         <h2 className="font-medium">Google Health</h2>
         {tokenRow ? (
           <p className="text-sm text-foreground/60">
@@ -48,15 +52,12 @@ export default async function SettingsPage({
         ) : (
           <p className="text-sm text-foreground/60">Not connected yet.</p>
         )}
-        <a
-          href="/api/auth/google"
-          className="mt-2 inline-block w-fit rounded bg-foreground px-4 py-2 text-sm text-background transition-transform active:scale-[0.98]"
-        >
+        <a href="/api/auth/google" className="btn btn-primary mt-2 w-fit">
           {tokenRow ? "Reconnect" : "Connect Google Health"}
         </a>
       </section>
 
-      <section className="flex flex-col gap-2 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+      <section className="card flex flex-col gap-2 p-4">
         <h2 className="font-medium">Last sync</h2>
         {lastSync ? (
           <div className="flex flex-col gap-1 text-sm text-foreground/60">
@@ -71,7 +72,7 @@ export default async function SettingsPage({
         )}
       </section>
 
-      <section className="flex flex-col gap-2 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+      <section className="card flex flex-col gap-2 p-4">
         <h2 className="font-medium">Profile</h2>
         <ProfileForm
           initialDateOfBirth={profile?.date_of_birth ?? null}
@@ -79,7 +80,7 @@ export default async function SettingsPage({
         />
       </section>
 
-      <section className="flex flex-col gap-2 rounded border border-black/[.08] p-4 dark:border-white/[.145]">
+      <section className="card flex flex-col gap-2 p-4">
         <h2 className="font-medium">Smart Alarm</h2>
         <AlarmForm
           initialAlarm={

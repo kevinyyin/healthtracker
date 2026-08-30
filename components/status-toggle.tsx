@@ -44,10 +44,8 @@ export function StatusToggle({ currentStatus }: { currentStatus: ActivityStatus 
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1 rounded px-2 py-2 text-sm transition-[background-color,transform] active:scale-[0.98] ${
-          status === "active"
-            ? "text-foreground/70 hover:bg-black/[.04] dark:hover:bg-white/[.08]"
-            : "bg-foreground/10 text-foreground"
+        className={`btn btn-sm flex items-center gap-1 !px-2.5 ${
+          status === "active" ? "btn-ghost" : "bg-foreground/10 text-foreground"
         }`}
         aria-label="Set activity status"
       >
@@ -57,14 +55,14 @@ export function StatusToggle({ currentStatus }: { currentStatus: ActivityStatus 
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 flex w-36 flex-col gap-0.5 rounded border border-black/[.08] bg-background p-1 shadow-lg md:left-auto md:right-0 dark:border-white/[.145]">
+        <div className="card absolute left-0 top-full z-50 mt-2 flex w-36 flex-col gap-0.5 p-1 md:left-auto md:right-0">
           {OPTIONS.map(({ key, icon: OptionIcon }) => (
             <button
               key={key}
               type="button"
               onClick={() => choose(key)}
-              className={`flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors ${
-                status === key ? "bg-foreground text-background" : "hover:bg-black/[.04] dark:hover:bg-white/[.08]"
+              className={`flex items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm transition-colors duration-150 ${
+                status === key ? "bg-foreground text-background" : "hover:bg-foreground/[.06]"
               }`}
             >
               <OptionIcon size={16} weight="bold" />

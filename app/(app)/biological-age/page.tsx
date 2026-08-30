@@ -27,7 +27,11 @@ export default async function BiologicalAgePage() {
   if (!profile) {
     return (
       <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-16">
-        <h1 className="text-2xl font-semibold">Biological Age</h1>
+        <div>
+          <p className="eyebrow mb-1">Longevity</p>
+          <h1 className="text-3xl font-semibold tracking-tight">Biological Age</h1>
+        </div>
+        <div className="divider -mt-4" />
         <EmptyState
           title="Add your profile to see this"
           hint="Enter your date of birth and biological sex in Settings so we can compare your HRV, resting heart rate, and sleep against age-normed population trends."
@@ -75,9 +79,13 @@ export default async function BiologicalAgePage() {
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Biological Age</h1>
+      <div>
+        <p className="eyebrow mb-1">Longevity</p>
+        <h1 className="text-3xl font-semibold tracking-tight">Biological Age</h1>
+      </div>
+      <div className="divider -mt-4" />
 
-      <div className="flex justify-center rounded border border-black/[.08] p-6 dark:border-white/[.145]">
+      <div className="card flex justify-center p-6">
         <ScoreRing
           value={ringFraction}
           display={result.bioAge != null ? result.bioAge.toFixed(0) : "-"}
@@ -97,8 +105,8 @@ export default async function BiologicalAgePage() {
 
       {result.factors.length > 0 && (
         <section>
-          <h2 className="mb-3 font-medium">Contributing factors</h2>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <h2 className="eyebrow mb-3">Contributing factors</h2>
+          <div className="stagger-children grid grid-cols-2 gap-4 sm:grid-cols-4">
             {result.factors.map((f) => (
               <MetricCard
                 key={f.key}
@@ -118,13 +126,13 @@ export default async function BiologicalAgePage() {
       )}
 
       {trendPoints.length > 1 && (
-        <section>
-          <h2 className="mb-3 font-medium">Trend</h2>
+        <section className="card p-4">
+          <h2 className="eyebrow mb-3">Trend</h2>
           <BioAgeTrendChart data={trendPoints} />
         </section>
       )}
 
-      <section className="flex flex-col gap-2 rounded border border-dashed border-black/[.12] p-4 text-sm text-foreground/60 dark:border-white/[.15]">
+      <section className="flex flex-col gap-2 rounded-[1.25rem] border border-dashed border-[var(--border)] p-4 text-sm text-foreground/60">
         <h2 className="font-medium text-foreground">Methodology &amp; caveats</h2>
         <p>
           This is a wellness estimate, not a clinical or epigenetic age test. It compares your trailing 30-day
