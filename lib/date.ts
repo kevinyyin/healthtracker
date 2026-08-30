@@ -73,6 +73,22 @@ export function currentLocalTimeString(): string {
   return new Date().toLocaleTimeString("en-GB", { timeZone: APP_TIMEZONE, hourCycle: "h23" });
 }
 
+/** Local time-of-day in minutes since midnight (0-1439) for an ISO timestamp, in APP_TIMEZONE. */
+export function localMinutesOfDay(iso: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIMEZONE,
+    hourCycle: "h23",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+    .formatToParts(new Date(iso))
+    .reduce<Record<string, string>>((acc, p) => {
+      acc[p.type] = p.value;
+      return acc;
+    }, {});
+  return Number(parts.hour) * 60 + Number(parts.minute);
+}
+
 /**
  * Whether `current` falls within [from, to] (inclusive), as HH:MM[:SS] strings.
  * Assumes from < to — does not handle windows that cross midnight.

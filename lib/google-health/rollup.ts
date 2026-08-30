@@ -11,6 +11,31 @@ interface StageMinutes {
   rem: number | null;
   light: number | null;
   awake: number | null;
+  /** Mid-sleep disturbances only — excludes the pre-sleep-onset lead-in and the final
+   *  wake-up, so it reflects "how often you woke up" rather than "was ever awake." */
+  wakeCount: number | null;
+  /** Minutes from lying down (session start) to sleep onset (first non-AWAKE stage). */
+  latencyMinutes: number | null;
+}
+
+interface StageSegment {
+  type: string;
+  startTime: string;
+  endTime: string;
+}
+
+function parseStageSegments(stageSummary: unknown): StageSegment[] {
+  if (!Array.isArray(stageSummary)) return [];
+  const segments: StageSegment[] = [];
+  for (const entry of stageSummary) {
+    if (!entry || typeof entry !== "object") continue;
+    const { type, startTime, endTime } = entry as Record<string, unknown>;
+    if (typeof type !== "string" || typeof startTime !== "string" || typeof endTime !== "string") continue;
+    segments.push({ type, startTime, endTime });
+  }
+  // Defensive — the API's segment ordering isn't documented as guaranteed, even
+  // though observed live data (2026-08-30) is chronological.
+  return segments.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 }
 
 /**
@@ -19,27 +44,61 @@ interface StageMinutes {
  * "LIGHT", "DEEP", "REM"). Each stage's own duration isn't provided, so it's derived
  * from its interval. Falls back to all-null stage minutes (total sleep is still computed
  * from the session's own start/end regardless) rather than throwing on an unexpected shape.
+ *
+ * Also derives two Sleep Score inputs from the same raw segments (see
+ * lib/analytics/sleep-score.ts): wakeCount and latencyMinutes, both null if the
+ * session never leaves AWAKE (no sleep onset to measure from).
  */
-function parseStageMinutes(stageSummary: unknown): StageMinutes {
-  const fallback: StageMinutes = { deep: null, rem: null, light: null, awake: null };
-  if (!Array.isArray(stageSummary)) return fallback;
+function parseStageMinutes(stageSummary: unknown, sessionStartTime: string): StageMinutes {
+  const fallback: StageMinutes = {
+    deep: null,
+    rem: null,
+    light: null,
+    awake: null,
+    wakeCount: null,
+    latencyMinutes: null,
+  };
+  const segments = parseStageSegments(stageSummary);
+  if (segments.length === 0) return fallback;
 
   const minutesByStage: Record<string, number> = {};
-  for (const entry of stageSummary) {
-    if (!entry || typeof entry !== "object") continue;
-    const { type, startTime, endTime } = entry as Record<string, unknown>;
-    if (typeof type !== "string" || typeof startTime !== "string" || typeof endTime !== "string") continue;
-    const minutes = (new Date(endTime).getTime() - new Date(startTime).getTime()) / 60_000;
-    const key = type.toLowerCase();
+  for (const seg of segments) {
+    const minutes = (new Date(seg.endTime).getTime() - new Date(seg.startTime).getTime()) / 60_000;
+    const key = seg.type.toLowerCase();
     minutesByStage[key] = (minutesByStage[key] ?? 0) + minutes;
   }
 
-  if (Object.keys(minutesByStage).length === 0) return fallback;
+  let firstAsleepIdx = -1;
+  let lastAsleepIdx = -1;
+  for (let i = 0; i < segments.length; i++) {
+    if (segments[i].type !== "AWAKE") {
+      if (firstAsleepIdx === -1) firstAsleepIdx = i;
+      lastAsleepIdx = i;
+    }
+  }
+
+  let wakeCount: number | null = null;
+  let latencyMinutes: number | null = null;
+  if (firstAsleepIdx !== -1) {
+    wakeCount = 0;
+    for (let i = firstAsleepIdx; i <= lastAsleepIdx; i++) {
+      if (segments[i].type === "AWAKE") wakeCount += 1;
+    }
+    const latency =
+      (new Date(segments[firstAsleepIdx].startTime).getTime() - new Date(sessionStartTime).getTime()) / 60_000;
+    latencyMinutes = Math.max(0, latency);
+  }
+
+  if (Object.keys(minutesByStage).length === 0) {
+    return { ...fallback, wakeCount, latencyMinutes };
+  }
   return {
     deep: minutesByStage.deep ?? null,
     rem: minutesByStage.rem ?? null,
     light: minutesByStage.light ?? null,
     awake: minutesByStage.awake ?? null,
+    wakeCount,
+    latencyMinutes,
   };
 }
 
@@ -69,7 +128,7 @@ export async function syncNightlyRollups(admin: SupabaseClient, userId: string):
 
   for (const session of sessions) {
     const date = localDateString(session.end_time);
-    const stages = parseStageMinutes(session.stage_summary);
+    const stages = parseStageMinutes(session.stage_summary, session.start_time);
     const totalSleepMinutes =
       (new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) / 60_000;
 
@@ -92,6 +151,8 @@ export async function syncNightlyRollups(admin: SupabaseClient, userId: string):
         light_sleep_minutes: stages.light,
         awake_minutes: stages.awake,
         total_sleep_minutes: totalSleepMinutes,
+        wake_count: stages.wakeCount,
+        sleep_latency_minutes: stages.latencyMinutes,
         hrv_rmssd: hrv,
         resting_hr: restingHr,
         spo2,
