@@ -6,6 +6,7 @@ import { toNum } from "@/lib/numeric";
 import { computeRecoveryScore, type NightlyMetrics } from "@/lib/analytics/recovery-score";
 import { computeDayStrain, type HrSample } from "@/lib/analytics/day-strain";
 import { computeSleepTarget } from "@/lib/analytics/sleep-debt";
+import { computeSleepScore, type SleepNightMetrics } from "@/lib/analytics/sleep-score";
 import { computeEnergyBank } from "@/lib/analytics/energy-bank";
 import { computeStressTimeline } from "@/lib/analytics/stress-score";
 import { computeHabitCorrelations, type JournalDay, type OutcomeDay } from "@/lib/analytics/habit-correlations";
@@ -43,7 +44,9 @@ export default async function TodayPage() {
   ] = await Promise.all([
     supabase
       .from("health_logs")
-      .select("date, hrv_rmssd, resting_hr, deep_sleep_minutes, total_sleep_minutes")
+      .select(
+        "date, hrv_rmssd, resting_hr, sleep_start, deep_sleep_minutes, rem_sleep_minutes, awake_minutes, total_sleep_minutes, wake_count, sleep_latency_minutes",
+      )
       .eq("user_id", user.id)
       .order("date", { ascending: false })
       .limit(HEALTH_LOG_HISTORY_DAYS),
@@ -83,12 +86,18 @@ export default async function TodayPage() {
   const excludedDates = excludedDatesFromPeriods(statusRows ?? [], today);
 
   // health_logs numeric columns come back as strings from PostgREST — coerce once here.
+  // wake_count is a native integer column, so it comes back as a number already.
   const logs = (healthLogRows ?? []).map((l) => ({
     date: l.date,
     hrv_rmssd: toNum(l.hrv_rmssd),
     resting_hr: toNum(l.resting_hr),
+    sleep_start: l.sleep_start as string | null,
     deep_sleep_minutes: toNum(l.deep_sleep_minutes),
+    rem_sleep_minutes: toNum(l.rem_sleep_minutes),
+    awake_minutes: toNum(l.awake_minutes),
     total_sleep_minutes: toNum(l.total_sleep_minutes),
+    wake_count: l.wake_count as number | null,
+    sleep_latency_minutes: toNum(l.sleep_latency_minutes),
   }));
 
   const tonight: NightlyMetrics = logs[0] ?? { date: today, hrv_rmssd: null, resting_hr: null };
@@ -107,11 +116,19 @@ export default async function TodayPage() {
   const sleepTarget = computeSleepTarget(last3Nights, dayStrain.strain);
   const hasSleepHistory = last3Nights.some((n) => n.total_sleep_minutes != null);
 
-  const lastNightSleepMinutes = logs[0]?.total_sleep_minutes;
-  const sleepScore =
-    lastNightSleepMinutes != null
-      ? Math.max(0, Math.min(100, Math.round((lastNightSleepMinutes / sleepTarget.targetMinutes) * 100)))
-      : null;
+  const tonightSleep: SleepNightMetrics =
+    logs[0] ??
+    ({
+      date: today,
+      sleep_start: null,
+      total_sleep_minutes: null,
+      awake_minutes: null,
+      deep_sleep_minutes: null,
+      rem_sleep_minutes: null,
+      wake_count: null,
+      sleep_latency_minutes: null,
+    } satisfies SleepNightMetrics);
+  const sleepScoreResult = computeSleepScore(logs, tonightSleep, sleepTarget.targetMinutes, excludedDates);
 
   const energyTimeline = intraday.map((s) => ({ minute: s.recorded_at, bpm: s.bpm, activeCalories: null }));
   const battery = computeEnergyBank(energyTimeline, recovery.score ?? DEFAULT_START_BATTERY);
@@ -164,7 +181,7 @@ export default async function TodayPage() {
     strainSampleCount: dayStrain.sampleCount,
     battery: currentBattery,
     sleepTarget,
-    sleepScore,
+    sleepScore: sleepScoreResult.score,
     hasSleepHistory,
     bioAge: bioAgeResult,
     hrv: tonight.hrv_rmssd,
