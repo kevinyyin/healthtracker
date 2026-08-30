@@ -172,19 +172,20 @@ export default async function TodayPage() {
     chartData,
   };
 
+  const syncHasError = lastSync?.status === "error";
   const syncCaption = lastSync
-    ? lastSync.status === "error"
+    ? syncHasError
       ? "Sync issue — check Settings"
       : `Synced ${formatRelativeTime(lastSync.started_at)}`
     : "Not synced yet";
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-16">
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow mb-1">Recovery Reading</p>
           <h1 className="text-3xl font-semibold tracking-tight">{formatDate(today)}</h1>
-          <p className="mt-1 text-xs text-foreground/70">{syncCaption}</p>
+          <p className={`mt-1 text-xs ${syncHasError ? "text-danger" : "text-foreground/70"}`}>{syncCaption}</p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/trends" className="btn btn-outline btn-sm">
