@@ -166,11 +166,12 @@ Corners are now generous and warm rather than sharp: cards and sheets use `1.25r
 - **Outline** (`.btn.btn-outline`): hairline border, hover fills faintly with the accent and lifts.
 - **Ghost** (`.btn.btn-ghost`): transparent, hover gets a faint foreground-tinted fill. Used for icon buttons and secondary chrome.
 - **Sizing:** `.btn-sm` for compact contexts, `.btn-icon` for square icon-only buttons.
-- **Press feedback:** `active:scale(0.96)` at a fast 90ms, defined once in `.btn:not(:disabled):active` — replaces the old per-className `active:scale-[0.98]` convention.
+- **Press feedback:** `active:scale(0.96)` at a fast 90ms, defined once in `.btn:not(:disabled):active` — replaces the old per-className `active:scale-[0.98]` convention. On `.btn-primary` specifically, press also swaps `--shadow-button` for the tighter `--shadow-button-pressed`, so the one variant with a lift shadow visibly settles into the stone surface — the same elevation language as `.card`, pressed — rather than just shrinking. Outline/ghost buttons have no shadow to compress, so they keep the plain scale; this is deliberate, not an oversight — it gives the primary action a heavier, more tactile press that matches its heavier visual weight.
 - **Focus feedback:** unchanged global `2px solid var(--accent)` ring on `:focus-visible`.
 
 ### Chips (`.chip` / `.chip-active`)
 - Full pill, hairline border when unselected, invert fill when selected — same selected-state rule as buttons.
+- **Press feedback:** same `active:scale(0.96)` at 90ms as `.btn`, via `.chip:not(:disabled):active` — kept in sync so every pill-shaped control in the system presses with the same snap.
 
 ### Cards / Containers (`.card`, `.card-interactive`)
 - **Corner Style:** `1.25rem`.

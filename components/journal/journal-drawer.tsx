@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { X } from "@phosphor-icons/react";
 import { saveJournalEntry } from "@/lib/actions/journal";
 import type { HabitCorrelation } from "@/lib/analytics/habit-correlations";
+import { useDialogA11y } from "@/lib/use-dialog-a11y";
 
 const DEFAULT_HABITS = ["Caffeine", "Late Meal", "Alcohol", "Sauna"];
 
@@ -17,6 +18,7 @@ interface JournalDrawerProps {
 
 export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, correlations }: JournalDrawerProps) {
   const [open, setOpen] = useState(false);
+  const panelRef = useDialogA11y(open, () => setOpen(false));
   const [date, setDate] = useState(today);
   const [habits, setHabits] = useState<string[]>(habitsToday);
   const [customHabit, setCustomHabit] = useState("");
@@ -64,11 +66,18 @@ export function JournalDrawer({ today, yesterday, habitsToday, habitsYesterday, 
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-t-3xl border border-[var(--border)] bg-surface p-6 shadow-2xl sm:rounded-3xl"
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="journal-drawer-title"
+            tabIndex={-1}
+            className="w-full max-w-md rounded-t-3xl border border-[var(--border)] bg-surface p-6 shadow-2xl outline-none sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Daily Habits</h2>
+              <h2 id="journal-drawer-title" className="text-lg font-semibold">
+                Daily Habits
+              </h2>
               <button type="button" onClick={() => setOpen(false)} className="btn btn-ghost btn-icon" aria-label="Close">
                 <X size={16} weight="bold" />
               </button>

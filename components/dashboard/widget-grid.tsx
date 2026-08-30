@@ -20,9 +20,11 @@ const WIDE_KEYS = new Set<WidgetKey>(["energy_stress_chart"]);
 export interface WidgetData {
   recovery: RecoveryResult;
   strain: number;
+  strainSampleCount: number;
   battery: number | null;
   sleepTarget: SleepTargetResult;
   sleepScore: number | null;
+  hasSleepHistory: boolean;
   bioAge: BiologicalAgeResult | null;
   hrv: number | null;
   restingHr: number | null;
@@ -38,8 +40,8 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
       return (
         <div className="card flex h-full items-center justify-center p-4">
           <ScoreRing
-            value={data.strain / STRAIN_MAX}
-            display={data.strain.toFixed(1)}
+            value={data.strainSampleCount > 0 ? data.strain / STRAIN_MAX : null}
+            display={data.strainSampleCount > 0 ? data.strain.toFixed(1) : "-"}
             label="Strain"
             sub={`of ${STRAIN_MAX}`}
             color={RING_COLORS.strain}
@@ -92,7 +94,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
       return (
         <MetricCard
           label="Sleep Debt"
-          value={`${Math.round(data.sleepTarget.debtMinutes)} min`}
+          value={data.hasSleepHistory ? `${Math.round(data.sleepTarget.debtMinutes)} min` : "-"}
           sub={`target ${sleepHours}h ${sleepMinutes}m`}
         />
       );
@@ -101,7 +103,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
         <section className="card p-4">
           <h2 className="mb-3 eyebrow">Energy Bank &amp; Stress</h2>
           {data.chartData.length === 0 ? (
-            <p className="text-sm text-foreground/60">No intraday data yet today.</p>
+            <p className="text-sm text-foreground/70">No intraday data yet today.</p>
           ) : (
             <StressBatteryChart data={data.chartData} />
           )}

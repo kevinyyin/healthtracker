@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/supabase/server";
 import { ageInYears, daysBefore, localDayEndIso, localDayStartIso, todayLocalDateString } from "@/lib/date";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatRelativeTime } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeRecoveryScore, type NightlyMetrics } from "@/lib/analytics/recovery-score";
 import { computeDayStrain, type HrSample } from "@/lib/analytics/day-strain";
@@ -39,6 +39,7 @@ export default async function TodayPage() {
     { data: profile },
     { data: widgetsRow },
     { data: statusRows },
+    { data: lastSync },
   ] = await Promise.all([
     supabase
       .from("health_logs")
@@ -67,6 +68,13 @@ export default async function TodayPage() {
     supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
     supabase.from("dashboard_widgets").select("widget_keys").eq("user_id", user.id).maybeSingle(),
     supabase.from("activity_status_periods").select("status, started_on, ended_on").eq("user_id", user.id),
+    supabase
+      .from("sync_log")
+      .select("started_at, status")
+      .eq("user_id", user.id)
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   const storedKeys = (widgetsRow?.widget_keys ?? []).filter(isWidgetKey);
@@ -97,6 +105,7 @@ export default async function TodayPage() {
 
   const last3Nights = logs.slice(0, 3).map((l) => ({ date: l.date, total_sleep_minutes: l.total_sleep_minutes }));
   const sleepTarget = computeSleepTarget(last3Nights, dayStrain.strain);
+  const hasSleepHistory = last3Nights.some((n) => n.total_sleep_minutes != null);
 
   const lastNightSleepMinutes = logs[0]?.total_sleep_minutes;
   const sleepScore =
@@ -152,14 +161,22 @@ export default async function TodayPage() {
   const widgetData: WidgetData = {
     recovery,
     strain: dayStrain.strain,
+    strainSampleCount: dayStrain.sampleCount,
     battery: currentBattery,
     sleepTarget,
     sleepScore,
+    hasSleepHistory,
     bioAge: bioAgeResult,
     hrv: tonight.hrv_rmssd,
     restingHr: tonight.resting_hr,
     chartData,
   };
+
+  const syncCaption = lastSync
+    ? lastSync.status === "error"
+      ? "Sync issue — check Settings"
+      : `Synced ${formatRelativeTime(lastSync.started_at)}`
+    : "Not synced yet";
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-16">
@@ -167,6 +184,7 @@ export default async function TodayPage() {
         <div>
           <p className="eyebrow mb-1">Recovery Reading</p>
           <h1 className="text-3xl font-semibold tracking-tight">{formatDate(today)}</h1>
+          <p className="mt-1 text-xs text-foreground/70">{syncCaption}</p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/trends" className="btn btn-outline btn-sm">

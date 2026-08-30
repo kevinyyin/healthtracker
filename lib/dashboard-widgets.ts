@@ -13,7 +13,9 @@ export const WIDGET_CATALOG = [
 
 export type WidgetKey = (typeof WIDGET_CATALOG)[number]["key"];
 
-export const DEFAULT_WIDGET_KEYS: WidgetKey[] = WIDGET_CATALOG.map((w) => w.key);
+/** Lean starting set for a first-run dashboard — the readings that matter for a daily
+ * glance. The rest of WIDGET_CATALOG is available as an opt-in via Customize. */
+export const DEFAULT_WIDGET_KEYS: WidgetKey[] = ["recovery_ring", "strain_ring", "sleep_ring", "workout_recommendation"];
 
 export function isWidgetKey(value: string): value is WidgetKey {
   return WIDGET_CATALOG.some((w) => w.key === value);

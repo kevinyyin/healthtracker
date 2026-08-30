@@ -19,10 +19,13 @@ export function ScoreRing({ value, display, label, sub, color }: ScoreRingProps)
   const fraction = value == null ? 0 : Math.max(0, Math.min(1, value));
   const dash = CIRCUMFERENCE * fraction;
 
+  const accessibleName = `${label}: ${display}${sub ? `, ${sub}` : ""}`;
+
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-3" role="group" aria-label={accessibleName}>
       <div
         className="relative"
+        aria-hidden="true"
         style={{
           width: SIZE,
           height: SIZE,
@@ -69,9 +72,9 @@ export function ScoreRing({ value, display, label, sub, color }: ScoreRingProps)
           {display}
         </div>
       </div>
-      <div className="flex flex-col items-center gap-0.5 text-center">
+      <div className="flex flex-col items-center gap-0.5 text-center" aria-hidden="true">
         <p className="eyebrow">{label}</p>
-        {sub && <p className="text-xs text-foreground/50">{sub}</p>}
+        {sub && <p className="text-xs text-foreground/70">{sub}</p>}
       </div>
     </div>
   );

@@ -17,6 +17,7 @@
   --shadow-card: 0 1px 2px rgba(28, 27, 25, 0.05), 0 14px 32px -18px rgba(28, 27, 25, 0.22);
   --shadow-card-hover: 0 1px 2px rgba(28, 27, 25, 0.06), 0 24px 40px -18px rgba(28, 27, 25, 0.28);
   --shadow-button: 0 10px 22px -12px rgba(28, 27, 25, 0.4);
+  --shadow-button-pressed: 0 1px 3px -1px rgba(28, 27, 25, 0.3);
 
   --ease-spa: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 150ms;
@@ -55,6 +56,7 @@
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 32px -18px rgba(0, 0, 0, 0.6);
     --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.45), 0 24px 40px -18px rgba(0, 0, 0, 0.68);
     --shadow-button: 0 10px 24px -12px rgba(0, 0, 0, 0.65);
+    --shadow-button-pressed: 0 1px 3px -1px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -73,6 +75,7 @@
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 32px -18px rgba(0, 0, 0, 0.6);
   --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.45), 0 24px 40px -18px rgba(0, 0, 0, 0.68);
   --shadow-button: 0 10px 24px -12px rgba(0, 0, 0, 0.65);
+  --shadow-button-pressed: 0 1px 3px -1px rgba(0, 0, 0, 0.5);
 }
 
 body {
@@ -129,7 +132,7 @@ body {
     font-weight: 500;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: color-mix(in oklab, var(--foreground) 55%, transparent);
+    color: color-mix(in oklab, var(--foreground) 72%, transparent);
   }
 
   .divider {
@@ -196,6 +199,11 @@ body {
   .btn-primary:not(:disabled):hover::before {
     transform: translateX(130%);
   }
+  /* The one lifted-shadow button variant physically settles into the stone surface on
+     press, instead of just shrinking — the same elevation language as .card, pressed. */
+  .btn-primary:not(:disabled):active {
+    box-shadow: var(--shadow-button-pressed);
+  }
 
   .btn-outline {
     background: transparent;
@@ -248,8 +256,9 @@ body {
   .chip:hover {
     border-color: color-mix(in oklab, var(--accent) 40%, var(--border));
   }
-  .chip:active {
+  .chip:not(:disabled):active {
     transform: scale(0.96);
+    transition-duration: 90ms;
   }
   .chip-active {
     background: var(--foreground);
