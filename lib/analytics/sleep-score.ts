@@ -1,4 +1,4 @@
-import { localMinutesOfDay } from "@/lib/date";
+import { DEFAULT_TIMEZONE, localMinutesOfDay } from "@/lib/date";
 
 export interface SleepNightMetrics {
   date: string;
@@ -230,12 +230,17 @@ const TIMING_DEVIATION_BANDS = [
  * with lib/date.ts's own documented DST approximation on localDayStartIso. Assumes
  * bedtimes fall in the evening-through-noon range, which covers realistic bedtimes.
  */
-function continuousBedtimeMinutes(iso: string): number {
-  const minutes = localMinutesOfDay(iso);
+function continuousBedtimeMinutes(iso: string, timezone: string): number {
+  const minutes = localMinutesOfDay(iso, timezone);
   return minutes < 12 * 60 ? minutes + 1440 : minutes;
 }
 
-function computeTimingFactor(history: SleepNightMetrics[], tonight: SleepNightMetrics, excludedDates?: Set<string>) {
+function computeTimingFactor(
+  history: SleepNightMetrics[],
+  tonight: SleepNightMetrics,
+  excludedDates: Set<string> | undefined,
+  timezone: string,
+) {
   const baseline = history
     .filter((n) => n.date < tonight.date && !excludedDates?.has(n.date) && n.sleep_start != null)
     .slice(-TIMING_BASELINE_WINDOW_DAYS);
@@ -246,9 +251,9 @@ function computeTimingFactor(history: SleepNightMetrics[], tonight: SleepNightMe
     return { score: null, rawValue: null, nightsUsed };
   }
 
-  const baselineMinutes = baseline.map((n) => continuousBedtimeMinutes(n.sleep_start!));
+  const baselineMinutes = baseline.map((n) => continuousBedtimeMinutes(n.sleep_start!, timezone));
   const baselineMean = baselineMinutes.reduce((sum, v) => sum + v, 0) / baselineMinutes.length;
-  const deviation = Math.abs(continuousBedtimeMinutes(tonight.sleep_start) - baselineMean);
+  const deviation = Math.abs(continuousBedtimeMinutes(tonight.sleep_start, timezone) - baselineMean);
 
   return { score: scoreFromBands(deviation, TIMING_DEVIATION_BANDS), rawValue: deviation, nightsUsed };
 }
@@ -279,6 +284,7 @@ export function computeSleepScore(
   tonight: SleepNightMetrics,
   targetMinutes: number,
   excludedDates?: Set<string>,
+  timezone: string = DEFAULT_TIMEZONE,
 ): SleepScoreResult {
   const trueAsleep = trueAsleepMinutes(tonight);
 
@@ -288,7 +294,7 @@ export function computeSleepScore(
   const rem = computeRemFactor(tonight, trueAsleep);
   const deep = computeDeepFactor(tonight, trueAsleep);
   const latency = computeLatencyFactor(tonight);
-  const timing = computeTimingFactor(history, tonight, excludedDates);
+  const timing = computeTimingFactor(history, tonight, excludedDates, timezone);
 
   const rawFactors: RawFactor[] = [
     { key: "total_sleep", label: "Total Sleep", baseWeight: WEIGHTS.total_sleep, ...totalSleep },

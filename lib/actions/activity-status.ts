@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/server";
 import { todayLocalDateString } from "@/lib/date";
+import { getUserTimezone } from "@/lib/timezone";
 import { isFlaggedStatus, type ActivityStatus } from "@/lib/activity-status";
 
 /**
@@ -11,7 +12,8 @@ import { isFlaggedStatus, type ActivityStatus } from "@/lib/activity-status";
  */
 export async function setActivityStatus(status: ActivityStatus) {
   const { supabase, user } = await requireUser();
-  const today = todayLocalDateString();
+  const timezone = await getUserTimezone(supabase, user.id);
+  const today = todayLocalDateString(timezone);
 
   const { error: closeError } = await supabase
     .from("activity_status_periods")

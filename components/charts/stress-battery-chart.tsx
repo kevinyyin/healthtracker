@@ -2,6 +2,7 @@
 
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { BATTERY_COLOR, STRESS_COLOR } from "@/lib/chart-colors";
+import { AccessibleChart } from "@/components/charts/accessible-chart";
 
 export interface StressBatteryPoint {
   minute: string;
@@ -13,7 +14,13 @@ export function StressBatteryChart({ data }: { data: StressBatteryPoint[] }) {
   if (data.length === 0) return null;
 
   return (
-    <div className="h-64 w-full">
+    <AccessibleChart
+      ariaLabel="Energy bank and stress today, by minute."
+      tableCaption="Energy bank and stress by time of day"
+      headers={["Time", "Energy Bank (%)", "Stress (%)"]}
+      rows={data.map((p) => [p.minute, p.battery, p.stress ?? "-"])}
+    >
+      <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
@@ -57,6 +64,7 @@ export function StressBatteryChart({ data }: { data: StressBatteryPoint[] }) {
           />
         </ComposedChart>
       </ResponsiveContainer>
-    </div>
+      </div>
+    </AccessibleChart>
   );
 }

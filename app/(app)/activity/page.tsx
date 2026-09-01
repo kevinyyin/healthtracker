@@ -1,16 +1,20 @@
 import { requireUser } from "@/lib/supabase/server";
 import { formatDate, formatDuration } from "@/lib/format";
+import { formatDistance, getUserUnitSystem } from "@/lib/units";
 import { EmptyState } from "@/components/empty-state";
 
 export default async function ActivityPage() {
   const { supabase, user } = await requireUser();
 
-  const { data: sessions } = await supabase
-    .from("activity_sessions")
-    .select("id, type, start_time, end_time, steps, calories, distance_m")
-    .eq("user_id", user.id)
-    .order("start_time", { ascending: false })
-    .limit(30);
+  const [{ data: sessions }, unitSystem] = await Promise.all([
+    supabase
+      .from("activity_sessions")
+      .select("id, type, start_time, end_time, steps, calories, distance_m")
+      .eq("user_id", user.id)
+      .order("start_time", { ascending: false })
+      .limit(30),
+    getUserUnitSystem(supabase, user.id),
+  ]);
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-16">
@@ -36,7 +40,7 @@ export default async function ActivityPage() {
                   {[
                     session.steps != null ? `${session.steps} steps` : null,
                     session.calories != null ? `${session.calories} cal` : null,
-                    session.distance_m != null ? `${(session.distance_m / 1000).toFixed(2)} km` : null,
+                    session.distance_m != null ? formatDistance(session.distance_m, unitSystem) : null,
                   ]
                     .filter(Boolean)
                     .join(" · ")}

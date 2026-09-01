@@ -1,14 +1,18 @@
 import { requireUser } from "@/lib/supabase/server";
 import { formatDate, formatDateTime, formatDuration } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
-import { todayLocalDateString } from "@/lib/date";
+import { daysBefore, todayLocalDateString } from "@/lib/date";
+import { getUserTimezone } from "@/lib/timezone";
 import { computeSleepTarget } from "@/lib/analytics/sleep-debt";
 import { computeSleepScore, type SleepScoreFactor } from "@/lib/analytics/sleep-score";
 import { excludedDatesFromPeriods } from "@/lib/activity-status";
+import { applyOverrides } from "@/lib/health-log-overrides";
+import { parseStageSegments } from "@/lib/google-health/rollup";
 import { RING_COLORS } from "@/lib/chart-colors";
 import { ScoreRing } from "@/components/score-ring";
 import { MetricCard } from "@/components/metric-card";
 import { SleepStageChart, type SleepStageNight } from "@/components/charts/sleep-stage-chart";
+import { SleepHypnogram } from "@/components/charts/sleep-hypnogram";
 import { EmptyState } from "@/components/empty-state";
 
 const STAGE_CHART_NIGHTS = 14;
@@ -18,52 +22,80 @@ const SLEEP_SCORE_HISTORY_DAYS = 20;
 
 export default async function SleepPage() {
   const { supabase, user } = await requireUser();
-  const today = todayLocalDateString();
+  const timezone = await getUserTimezone(supabase, user.id);
+  const today = todayLocalDateString(timezone);
 
-  const [{ data: sessions }, { data: healthLogRows }, { data: statusRows }] = await Promise.all([
-    supabase
-      .from("sleep_sessions")
-      .select("id, start_time, end_time, source")
-      .eq("user_id", user.id)
-      .order("start_time", { ascending: false })
-      .limit(30),
-    supabase
-      .from("health_logs")
-      .select(
-        "date, sleep_start, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes, total_sleep_minutes, wake_count, sleep_latency_minutes",
-      )
-      .eq("user_id", user.id)
-      .order("date", { ascending: false })
-      .limit(SLEEP_SCORE_HISTORY_DAYS),
-    supabase.from("activity_status_periods").select("status, started_on, ended_on").eq("user_id", user.id),
-  ]);
+  const [{ data: sessions }, { data: healthLogRows }, { data: overrideRows }, { data: statusRows }, { data: latestSession }] =
+    await Promise.all([
+      supabase
+        .from("sleep_sessions")
+        .select("id, start_time, end_time, source")
+        .eq("user_id", user.id)
+        .order("start_time", { ascending: false })
+        .limit(30),
+      supabase
+        .from("health_logs")
+        .select(
+          "date, sleep_start, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes, total_sleep_minutes, wake_count, sleep_latency_minutes",
+        )
+        .eq("user_id", user.id)
+        .order("date", { ascending: false })
+        .limit(SLEEP_SCORE_HISTORY_DAYS),
+      supabase
+        .from("health_log_overrides")
+        .select("date, hrv_rmssd, resting_hr, spo2, total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes")
+        .eq("user_id", user.id)
+        .gte("date", daysBefore(today, SLEEP_SCORE_HISTORY_DAYS)),
+      supabase.from("activity_status_periods").select("status, started_on, ended_on").eq("user_id", user.id),
+      supabase
+        .from("sleep_sessions")
+        .select("start_time, end_time, stage_summary")
+        .eq("user_id", user.id)
+        .order("start_time", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   const excludedDates = excludedDatesFromPeriods(statusRows ?? [], today);
 
-  const logs = (healthLogRows ?? []).map((l) => ({
-    date: l.date,
-    sleep_start: l.sleep_start as string | null,
-    deep: toNum(l.deep_sleep_minutes),
-    deep_sleep_minutes: toNum(l.deep_sleep_minutes),
-    rem: toNum(l.rem_sleep_minutes),
-    rem_sleep_minutes: toNum(l.rem_sleep_minutes),
-    light: toNum(l.light_sleep_minutes),
-    awake: toNum(l.awake_minutes),
-    awake_minutes: toNum(l.awake_minutes),
-    total_sleep_minutes: toNum(l.total_sleep_minutes),
-    wake_count: l.wake_count as number | null,
-    sleep_latency_minutes: toNum(l.sleep_latency_minutes),
+  const overrides = (overrideRows ?? []).map((o) => ({
+    date: o.date,
+    hrv_rmssd: toNum(o.hrv_rmssd),
+    resting_hr: toNum(o.resting_hr),
+    spo2: toNum(o.spo2),
+    total_sleep_minutes: toNum(o.total_sleep_minutes),
+    deep_sleep_minutes: toNum(o.deep_sleep_minutes),
+    rem_sleep_minutes: toNum(o.rem_sleep_minutes),
+    light_sleep_minutes: toNum(o.light_sleep_minutes),
+    awake_minutes: toNum(o.awake_minutes),
   }));
+
+  const logs = applyOverrides(
+    (healthLogRows ?? []).map((l) => ({
+      date: l.date,
+      sleep_start: l.sleep_start as string | null,
+      deep_sleep_minutes: toNum(l.deep_sleep_minutes),
+      rem_sleep_minutes: toNum(l.rem_sleep_minutes),
+      light_sleep_minutes: toNum(l.light_sleep_minutes),
+      awake_minutes: toNum(l.awake_minutes),
+      total_sleep_minutes: toNum(l.total_sleep_minutes),
+      wake_count: l.wake_count as number | null,
+      sleep_latency_minutes: toNum(l.sleep_latency_minutes),
+    })),
+    overrides,
+  );
+
+  const hypnogramSegments = latestSession ? parseStageSegments(latestSession.stage_summary) : [];
 
   const nights: SleepStageNight[] = [...logs]
     .slice(0, STAGE_CHART_NIGHTS)
     .reverse()
     .map((l) => ({
       date: formatDate(l.date),
-      deep: l.deep,
-      rem: l.rem,
-      light: l.light,
-      awake: l.awake,
+      deep: l.deep_sleep_minutes,
+      rem: l.rem_sleep_minutes,
+      light: l.light_sleep_minutes,
+      awake: l.awake_minutes,
     }));
 
   const sleepTarget = computeSleepTarget(
@@ -83,7 +115,7 @@ export default async function SleepPage() {
       wake_count: null,
       sleep_latency_minutes: null,
     };
-  const sleepScoreResult = computeSleepScore(logs, tonightSleep, sleepTarget.targetMinutes, excludedDates);
+  const sleepScoreResult = computeSleepScore(logs, tonightSleep, sleepTarget.targetMinutes, excludedDates, timezone);
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 px-4 py-16">
@@ -116,6 +148,13 @@ export default async function SleepPage() {
               />
             ))}
           </div>
+        </section>
+      )}
+
+      {hypnogramSegments.length > 0 && (
+        <section className="card p-4">
+          <h2 className="mb-3 font-medium">Last Night</h2>
+          <SleepHypnogram segments={hypnogramSegments} />
         </section>
       )}
 

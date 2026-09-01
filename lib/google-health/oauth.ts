@@ -1,6 +1,7 @@
 import "server-only";
 import { serverEnv } from "@/lib/env.server";
 import { REQUESTED_SCOPES } from "@/lib/google-health/scopes";
+import { fetchWithRetry, GoogleApiError } from "@/lib/google-health/http";
 import type { GoogleOAuthTokenResponse } from "@/lib/google-health/types";
 
 const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -23,17 +24,22 @@ export function buildAuthUrl(state: string): string {
 }
 
 async function requestToken(body: URLSearchParams): Promise<GoogleOAuthTokenResponse> {
-  const response = await fetch(TOKEN_ENDPOINT, {
+  // fetchWithRetry throws GoogleApiError on failure — a 400 invalid_grant (revoked
+  // refresh token) isn't retried, so callers can detect it via err.status/err.body.
+  const response = await fetchWithRetry(TOKEN_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
 
-  if (!response.ok) {
-    throw new Error(`Google OAuth token request failed (${response.status}): ${await response.text()}`);
-  }
-
   return response.json() as Promise<GoogleOAuthTokenResponse>;
+}
+
+/** True for a token-endpoint failure that retrying can't fix — the refresh token was
+ *  revoked (by the user disconnecting on Google's side, or the grant expiring), so the
+ *  only recovery is the user reconnecting via OAuth consent again. */
+export function isPermanentAuthError(err: unknown): boolean {
+  return err instanceof GoogleApiError && err.status === 400 && /invalid_grant/i.test(err.body);
 }
 
 /** Exchanges an authorization code (from the OAuth callback) for access/refresh tokens. */

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/supabase/server";
-import { ageInYears, daysBefore, localDayEndIso, localDayStartIso, todayLocalDateString } from "@/lib/date";
+import { ageInYears, daysBefore, DEFAULT_TIMEZONE, localDayEndIso, localDayStartIso, todayLocalDateString } from "@/lib/date";
 import { formatDate, formatRelativeTime } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeRecoveryScore, type NightlyMetrics } from "@/lib/analytics/recovery-score";
@@ -11,12 +11,16 @@ import { computeEnergyBank } from "@/lib/analytics/energy-bank";
 import { computeStressTimeline } from "@/lib/analytics/stress-score";
 import { computeHabitCorrelations, type JournalDay, type OutcomeDay } from "@/lib/analytics/habit-correlations";
 import { computeBiologicalAge, type BiologicalSex } from "@/lib/analytics/biological-age";
+import { computeIllnessSignal } from "@/lib/analytics/illness-signal";
+import { recoveryGuidance, sleepGuidance } from "@/lib/analytics/coaching";
 import { excludedDatesFromPeriods } from "@/lib/activity-status";
+import { applyOverrides } from "@/lib/health-log-overrides";
 import { DEFAULT_WIDGET_KEYS, isWidgetKey, type WidgetKey } from "@/lib/dashboard-widgets";
 import { WidgetGrid, type WidgetData } from "@/components/dashboard/widget-grid";
 import { CustomizeDrawer } from "@/components/dashboard/customize-drawer";
 import { type StressBatteryPoint } from "@/components/charts/stress-battery-chart";
 import { JournalDrawer } from "@/components/journal/journal-drawer";
+import { IllnessBanner } from "@/components/illness-banner";
 
 const HEALTH_LOG_HISTORY_DAYS = 20;
 const DEFAULT_START_BATTERY = 70;
@@ -29,15 +33,24 @@ const BIO_AGE_HISTORY_DAYS = 35;
 export default async function TodayPage() {
   const { supabase, user } = await requireUser();
 
-  const today = todayLocalDateString();
+  // Fetched first (not inside the big Promise.all below) because today/yesterday —
+  // used to bound several of those queries — depend on the user's own timezone.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("date_of_birth, biological_sex, timezone")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const timezone = profile?.timezone ?? DEFAULT_TIMEZONE;
+
+  const today = todayLocalDateString(timezone);
   const yesterday = daysBefore(today, 1);
 
   const [
     { data: healthLogRows },
     { data: bioAgeLogRows },
+    { data: overrideRows },
     { data: intradayRows },
     { data: journalRows },
-    { data: profile },
     { data: widgetsRow },
     { data: statusRows },
     { data: lastSync },
@@ -45,7 +58,7 @@ export default async function TodayPage() {
     supabase
       .from("health_logs")
       .select(
-        "date, hrv_rmssd, resting_hr, sleep_start, deep_sleep_minutes, rem_sleep_minutes, awake_minutes, total_sleep_minutes, wake_count, sleep_latency_minutes",
+        "date, hrv_rmssd, resting_hr, spo2, sleep_start, deep_sleep_minutes, rem_sleep_minutes, awake_minutes, total_sleep_minutes, wake_count, sleep_latency_minutes",
       )
       .eq("user_id", user.id)
       .order("date", { ascending: false })
@@ -57,18 +70,22 @@ export default async function TodayPage() {
       .gte("date", daysBefore(today, BIO_AGE_HISTORY_DAYS))
       .order("date", { ascending: true }),
     supabase
+      .from("health_log_overrides")
+      .select("date, hrv_rmssd, resting_hr, spo2, total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes")
+      .eq("user_id", user.id)
+      .gte("date", daysBefore(today, BIO_AGE_HISTORY_DAYS)),
+    supabase
       .from("intraday_hr")
       .select("recorded_at, bpm, activity_session_id")
       .eq("user_id", user.id)
-      .gte("recorded_at", localDayStartIso(today))
-      .lt("recorded_at", localDayEndIso(today))
+      .gte("recorded_at", localDayStartIso(today, timezone))
+      .lt("recorded_at", localDayEndIso(today, timezone))
       .order("recorded_at", { ascending: true }),
     supabase
       .from("journal_entries")
       .select("date, habits")
       .eq("user_id", user.id)
       .order("date", { ascending: true }),
-    supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
     supabase.from("dashboard_widgets").select("widget_keys").eq("user_id", user.id).maybeSingle(),
     supabase.from("activity_status_periods").select("status, started_on, ended_on").eq("user_id", user.id),
     supabase
@@ -85,23 +102,43 @@ export default async function TodayPage() {
 
   const excludedDates = excludedDatesFromPeriods(statusRows ?? [], today);
 
+  // Manual corrections/backfill (Settings > Correct data) — merged on top of the
+  // synced values below, since health_logs itself gets overwritten wholesale by the
+  // next sync run and can't hold a durable correction directly.
+  const overrides = (overrideRows ?? []).map((o) => ({
+    date: o.date,
+    hrv_rmssd: toNum(o.hrv_rmssd),
+    resting_hr: toNum(o.resting_hr),
+    spo2: toNum(o.spo2),
+    total_sleep_minutes: toNum(o.total_sleep_minutes),
+    deep_sleep_minutes: toNum(o.deep_sleep_minutes),
+    rem_sleep_minutes: toNum(o.rem_sleep_minutes),
+    light_sleep_minutes: toNum(o.light_sleep_minutes),
+    awake_minutes: toNum(o.awake_minutes),
+  }));
+
   // health_logs numeric columns come back as strings from PostgREST — coerce once here.
   // wake_count is a native integer column, so it comes back as a number already.
-  const logs = (healthLogRows ?? []).map((l) => ({
-    date: l.date,
-    hrv_rmssd: toNum(l.hrv_rmssd),
-    resting_hr: toNum(l.resting_hr),
-    sleep_start: l.sleep_start as string | null,
-    deep_sleep_minutes: toNum(l.deep_sleep_minutes),
-    rem_sleep_minutes: toNum(l.rem_sleep_minutes),
-    awake_minutes: toNum(l.awake_minutes),
-    total_sleep_minutes: toNum(l.total_sleep_minutes),
-    wake_count: l.wake_count as number | null,
-    sleep_latency_minutes: toNum(l.sleep_latency_minutes),
-  }));
+  const logs = applyOverrides(
+    (healthLogRows ?? []).map((l) => ({
+      date: l.date,
+      hrv_rmssd: toNum(l.hrv_rmssd),
+      resting_hr: toNum(l.resting_hr),
+      spo2: toNum(l.spo2),
+      sleep_start: l.sleep_start as string | null,
+      deep_sleep_minutes: toNum(l.deep_sleep_minutes),
+      rem_sleep_minutes: toNum(l.rem_sleep_minutes),
+      awake_minutes: toNum(l.awake_minutes),
+      total_sleep_minutes: toNum(l.total_sleep_minutes),
+      wake_count: l.wake_count as number | null,
+      sleep_latency_minutes: toNum(l.sleep_latency_minutes),
+    })),
+    overrides,
+  );
 
   const tonight: NightlyMetrics = logs[0] ?? { date: today, hrv_rmssd: null, resting_hr: null };
   const recovery = computeRecoveryScore(logs, tonight, excludedDates);
+  const illness = computeIllnessSignal(logs, { ...tonight, spo2: logs[0]?.spo2 ?? null }, excludedDates);
 
   const intraday = (intradayRows ?? []).map((s) => ({
     recorded_at: s.recorded_at,
@@ -128,7 +165,7 @@ export default async function TodayPage() {
       wake_count: null,
       sleep_latency_minutes: null,
     } satisfies SleepNightMetrics);
-  const sleepScoreResult = computeSleepScore(logs, tonightSleep, sleepTarget.targetMinutes, excludedDates);
+  const sleepScoreResult = computeSleepScore(logs, tonightSleep, sleepTarget.targetMinutes, excludedDates, timezone);
 
   const energyTimeline = intraday.map((s) => ({ minute: s.recorded_at, bpm: s.bpm, activeCalories: null }));
   const battery = computeEnergyBank(energyTimeline, recovery.score ?? DEFAULT_START_BATTERY);
@@ -155,13 +192,16 @@ export default async function TodayPage() {
   const journalDays: JournalDay[] = (journalRows ?? []).map((j) => ({ date: j.date, habits: j.habits }));
   const correlations = computeHabitCorrelations(journalDays, outcomes, excludedDates);
 
-  const bioAgeLogs = (bioAgeLogRows ?? []).map((l) => ({
-    date: l.date,
-    hrv_rmssd: toNum(l.hrv_rmssd),
-    resting_hr: toNum(l.resting_hr),
-    deep_sleep_minutes: toNum(l.deep_sleep_minutes),
-    total_sleep_minutes: toNum(l.total_sleep_minutes),
-  }));
+  const bioAgeLogs = applyOverrides(
+    (bioAgeLogRows ?? []).map((l) => ({
+      date: l.date,
+      hrv_rmssd: toNum(l.hrv_rmssd),
+      resting_hr: toNum(l.resting_hr),
+      deep_sleep_minutes: toNum(l.deep_sleep_minutes),
+      total_sleep_minutes: toNum(l.total_sleep_minutes),
+    })),
+    overrides,
+  );
   const bioAgeResult = profile
     ? computeBiologicalAge(
         bioAgeLogs,
@@ -187,6 +227,8 @@ export default async function TodayPage() {
     hrv: tonight.hrv_rmssd,
     restingHr: tonight.resting_hr,
     chartData,
+    recoveryGuidance: recoveryGuidance(recovery),
+    sleepGuidance: sleepGuidance(sleepScoreResult, sleepTarget),
   };
 
   const syncHasError = lastSync?.status === "error";
@@ -212,6 +254,8 @@ export default async function TodayPage() {
         </div>
       </div>
       <div className="divider -mt-4" />
+
+      {illness.flagged && <IllnessBanner reasons={illness.reasons} />}
 
       <WidgetGrid keys={widgetKeys} data={widgetData} />
 

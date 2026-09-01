@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { RecoveryResult } from "@/lib/analytics/recovery-score";
 import type { SleepTargetResult } from "@/lib/analytics/sleep-debt";
 import type { BiologicalAgeResult } from "@/lib/analytics/biological-age";
+import { recommendTargetStrain } from "@/lib/analytics/day-strain";
 import type { WidgetKey } from "@/lib/dashboard-widgets";
 import { RING_COLORS } from "@/lib/chart-colors";
 import { ScoreRing } from "@/components/score-ring";
@@ -10,13 +11,14 @@ import { MetricCard } from "@/components/metric-card";
 import { BaselineProgress } from "@/components/baseline-progress";
 import { WorkoutRecommender } from "@/components/dashboard/workout-recommender";
 import { BioAgeTeaser } from "@/components/dashboard/bio-age-teaser";
+import { DailyGuidance } from "@/components/dashboard/daily-guidance";
 import { StressBatteryChart, type StressBatteryPoint } from "@/components/charts/stress-battery-chart";
 
 const STRAIN_MAX = 21;
 const RECOVERY_BASELINE_TARGET = 14;
 
-// Widgets that need the full row width (a chart) rather than one grid cell.
-const WIDE_KEYS = new Set<WidgetKey>(["energy_stress_chart"]);
+// Widgets that need the full row width (a chart, or a short paragraph of text) rather than one grid cell.
+const WIDE_KEYS = new Set<WidgetKey>(["energy_stress_chart", "daily_guidance"]);
 
 // The three rings get their own row, visually distinct from the secondary metric cards
 // below — otherwise a flat grid reads as one undifferentiated wall as widget count grows.
@@ -34,6 +36,8 @@ export interface WidgetData {
   hrv: number | null;
   restingHr: number | null;
   chartData: StressBatteryPoint[];
+  recoveryGuidance: string;
+  sleepGuidance: string;
 }
 
 function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
@@ -115,6 +119,14 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
           value={data.hasSleepHistory ? `${Math.round(data.sleepTarget.debtMinutes)} min` : "-"}
           sub={`target ${sleepHours}h ${sleepMinutes}m`}
           href="/sleep"
+        />
+      );
+    case "daily_guidance":
+      return (
+        <DailyGuidance
+          recovery={data.recoveryGuidance}
+          sleep={data.sleepGuidance}
+          strain={recommendTargetStrain(data.recovery.score).label}
         />
       );
     case "energy_stress_chart":

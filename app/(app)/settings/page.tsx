@@ -1,7 +1,10 @@
 import { requireUser } from "@/lib/supabase/server";
 import { formatDateTime } from "@/lib/format";
+import { todayLocalDateString } from "@/lib/date";
+import type { UnitSystem } from "@/lib/units";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { AlarmForm } from "@/components/settings/alarm-form";
+import { CorrectionDrawer } from "@/components/settings/correction-drawer";
 
 export default async function SettingsPage({
   searchParams,
@@ -13,7 +16,11 @@ export default async function SettingsPage({
 
   const [{ data: tokenRow }, { data: lastSync }, { data: profile }, { data: alarm }, { count: subscriptionCount }] =
     await Promise.all([
-      supabase.from("google_oauth_tokens").select("updated_at").eq("user_id", user.id).maybeSingle(),
+      supabase
+        .from("google_oauth_tokens")
+        .select("updated_at, sync_disabled")
+        .eq("user_id", user.id)
+        .maybeSingle(),
       supabase
         .from("sync_log")
         .select("started_at, finished_at, status, domains, error")
@@ -21,7 +28,11 @@ export default async function SettingsPage({
         .order("started_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
-      supabase.from("profiles").select("date_of_birth, biological_sex").eq("user_id", user.id).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("date_of_birth, biological_sex, timezone, unit_system")
+        .eq("user_id", user.id)
+        .maybeSingle(),
       supabase.from("alarms").select("enabled, wake_from, wake_to").eq("user_id", user.id).maybeSingle(),
       supabase.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     ]);
@@ -45,7 +56,9 @@ export default async function SettingsPage({
 
       <section className="card flex flex-col gap-2 p-4">
         <h2 className="font-medium">Google Health</h2>
-        {tokenRow ? (
+        {tokenRow?.sync_disabled ? (
+          <p className="text-sm text-danger">Sync paused — reconnect to resume.</p>
+        ) : tokenRow ? (
           <p className="text-sm text-foreground/60">
             Connected. Last token refresh {formatDateTime(tokenRow.updated_at)}.
           </p>
@@ -77,7 +90,15 @@ export default async function SettingsPage({
         <ProfileForm
           initialDateOfBirth={profile?.date_of_birth ?? null}
           initialBiologicalSex={(profile?.biological_sex as "male" | "female" | null) ?? null}
+          initialTimezone={profile?.timezone ?? null}
+          initialUnitSystem={(profile?.unit_system as UnitSystem | undefined) ?? "metric"}
         />
+      </section>
+
+      <section className="card flex flex-col gap-2 p-4">
+        <h2 className="font-medium">Correct data</h2>
+        <p className="text-sm text-foreground/60">Fix or backfill a night&apos;s sleep or vitals values.</p>
+        <CorrectionDrawer today={todayLocalDateString(profile?.timezone)} />
       </section>
 
       <section className="card flex flex-col gap-2 p-4">
