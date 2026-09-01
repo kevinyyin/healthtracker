@@ -1,9 +1,18 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { listDataPoints } from "@/lib/google-health/client";
+import { buildSinceFilter, listAllDataPoints } from "@/lib/google-health/client";
 import { GOOGLE_HEALTH_DATA_TYPES, type GoogleHealthDataPoint } from "@/lib/google-health/types";
 
 const ACTIVE_CALORIE_TAG_LOOKBACK_MS = 3 * 24 * 60 * 60 * 1000;
+
+/**
+ * Overlap applied before the last-known timestamp when computing an incremental sync
+ * window, so late-arriving/backfilled Google data isn't missed at the boundary. Every
+ * ingest stream upserts on a stable conflict key (external_id, or (user_id,
+ * recorded_at)), so re-fetching this overlap on every run is safe/idempotent — matches
+ * the self-heal philosophy rollup.ts already uses for ROLLUP_LOOKBACK_MS.
+ */
+const SYNC_OVERLAP_MS = 2 * 24 * 60 * 60 * 1000;
 
 /** Google mixes JSON numbers and numeric strings across (and even within) data types. */
 function parseGoogleNumber(value: unknown): number | null {
@@ -33,8 +42,35 @@ function readSampleTime(dp: GoogleHealthDataPoint, payloadKey: string): string |
   return record(record(dp[payloadKey])?.sampleTime)?.physicalTime as string | undefined;
 }
 
+/**
+ * The start of this sync's request window: SYNC_OVERLAP_MS before the max already-
+ * stored timestamp for this user+stream, or undefined (unbounded — full history) if
+ * there's no prior data at all, so a brand-new user's first sync backfills everything.
+ */
+async function incrementalStartTime(
+  admin: SupabaseClient,
+  table: string,
+  column: string,
+  userId: string,
+  extraEq?: { column: string; value: string },
+): Promise<string | undefined> {
+  let query = admin.from(table).select(column).eq("user_id", userId);
+  if (extraEq) query = query.eq(extraEq.column, extraEq.value);
+  const { data } = await query.order(column, { ascending: false }).limit(1).maybeSingle();
+
+  // The Supabase client here isn't typed against the generated schema, so a
+  // non-literal `column` string makes `.select()` infer an opaque error-shaped type
+  // for `data` — go through `unknown` since it genuinely doesn't statically overlap.
+  const latest = data ? (data as unknown as Record<string, unknown>)[column] : null;
+  if (typeof latest !== "string") return undefined;
+
+  return new Date(new Date(latest).getTime() - SYNC_OVERLAP_MS).toISOString();
+}
+
 export async function syncSleep(admin: SupabaseClient, userId: string, accessToken: string) {
-  const { dataPoints } = await listDataPoints(accessToken, GOOGLE_HEALTH_DATA_TYPES.sleep);
+  const since = await incrementalStartTime(admin, "sleep_sessions", "end_time", userId);
+  const filter = buildSinceFilter(GOOGLE_HEALTH_DATA_TYPES.sleep, since);
+  const dataPoints = await listAllDataPoints(accessToken, GOOGLE_HEALTH_DATA_TYPES.sleep, { filter });
   if (dataPoints.length === 0) return 0;
 
   const rows = dataPoints
@@ -70,7 +106,9 @@ export async function syncSleep(admin: SupabaseClient, userId: string, accessTok
 }
 
 export async function syncActivity(admin: SupabaseClient, userId: string, accessToken: string) {
-  const { dataPoints } = await listDataPoints(accessToken, GOOGLE_HEALTH_DATA_TYPES.exercise);
+  const since = await incrementalStartTime(admin, "activity_sessions", "end_time", userId);
+  const filter = buildSinceFilter(GOOGLE_HEALTH_DATA_TYPES.exercise, since);
+  const dataPoints = await listAllDataPoints(accessToken, GOOGLE_HEALTH_DATA_TYPES.exercise, { filter });
   if (dataPoints.length === 0) return 0;
 
   const rows = dataPoints
@@ -127,7 +165,9 @@ export async function syncActivity(admin: SupabaseClient, userId: string, access
  * target is (user_id, recorded_at) rather than an external id.
  */
 export async function syncIntradayHr(admin: SupabaseClient, userId: string, accessToken: string) {
-  const { dataPoints } = await listDataPoints(accessToken, GOOGLE_HEALTH_DATA_TYPES.heartRate);
+  const since = await incrementalStartTime(admin, "intraday_hr", "recorded_at", userId);
+  const filter = buildSinceFilter(GOOGLE_HEALTH_DATA_TYPES.heartRate, since);
+  const dataPoints = await listAllDataPoints(accessToken, GOOGLE_HEALTH_DATA_TYPES.heartRate, { filter });
   if (dataPoints.length === 0) return 0;
 
   const rows = dataPoints
@@ -177,7 +217,12 @@ export async function syncSparseVitals(admin: SupabaseClient, userId: string, ac
 
   for (const metric of SPARSE_VITAL_METRICS) {
     try {
-      const { dataPoints } = await listDataPoints(accessToken, metric.dataType);
+      const since = await incrementalStartTime(admin, "vitals_readings", "recorded_at", userId, {
+        column: "metric_type",
+        value: metric.metricType,
+      });
+      const filter = buildSinceFilter(metric.dataType, since);
+      const dataPoints = await listAllDataPoints(accessToken, metric.dataType, { filter });
       if (dataPoints.length === 0) continue;
 
       const rows = dataPoints
@@ -202,8 +247,9 @@ export async function syncSparseVitals(admin: SupabaseClient, userId: string, ac
 
       if (rows.length === 0) continue;
 
-      // No stable external id on vitals readings, so these are append-only inserts.
-      const { error } = await admin.from("vitals_readings").insert(rows);
+      const { error } = await admin
+        .from("vitals_readings")
+        .upsert(rows, { onConflict: "user_id,metric_type,recorded_at" });
       if (error) throw error;
       total += rows.length;
     } catch (err) {

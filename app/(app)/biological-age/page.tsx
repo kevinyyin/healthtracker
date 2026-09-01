@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeBiologicalAge, computeBiologicalAgeTrend, type BiologicalSex } from "@/lib/analytics/biological-age";
 import { excludedDatesFromPeriods } from "@/lib/activity-status";
+import { applyOverrides } from "@/lib/health-log-overrides";
 import { ScoreRing } from "@/components/score-ring";
 import { MetricCard } from "@/components/metric-card";
 import { BaselineProgress } from "@/components/baseline-progress";
@@ -20,7 +21,7 @@ export default async function BiologicalAgePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("date_of_birth, biological_sex")
+    .select("date_of_birth, biological_sex, timezone")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -40,7 +41,7 @@ export default async function BiologicalAgePage() {
     );
   }
 
-  const today = todayLocalDateString();
+  const today = todayLocalDateString(profile.timezone);
 
   const { data: healthLogRows } = await supabase
     .from("health_logs")
@@ -49,19 +50,40 @@ export default async function BiologicalAgePage() {
     .gte("date", daysBefore(today, HISTORY_DAYS))
     .order("date", { ascending: true });
 
+  const { data: overrideRows } = await supabase
+    .from("health_log_overrides")
+    .select("date, hrv_rmssd, resting_hr, spo2, total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes")
+    .eq("user_id", user.id)
+    .gte("date", daysBefore(today, HISTORY_DAYS));
+
   const { data: statusRows } = await supabase
     .from("activity_status_periods")
     .select("status, started_on, ended_on")
     .eq("user_id", user.id);
   const excludedDates = excludedDatesFromPeriods(statusRows ?? [], today);
 
-  const logsAscending = (healthLogRows ?? []).map((l) => ({
-    date: l.date,
-    hrv_rmssd: toNum(l.hrv_rmssd),
-    resting_hr: toNum(l.resting_hr),
-    deep_sleep_minutes: toNum(l.deep_sleep_minutes),
-    total_sleep_minutes: toNum(l.total_sleep_minutes),
+  const overrides = (overrideRows ?? []).map((o) => ({
+    date: o.date,
+    hrv_rmssd: toNum(o.hrv_rmssd),
+    resting_hr: toNum(o.resting_hr),
+    spo2: toNum(o.spo2),
+    total_sleep_minutes: toNum(o.total_sleep_minutes),
+    deep_sleep_minutes: toNum(o.deep_sleep_minutes),
+    rem_sleep_minutes: toNum(o.rem_sleep_minutes),
+    light_sleep_minutes: toNum(o.light_sleep_minutes),
+    awake_minutes: toNum(o.awake_minutes),
   }));
+
+  const logsAscending = applyOverrides(
+    (healthLogRows ?? []).map((l) => ({
+      date: l.date,
+      hrv_rmssd: toNum(l.hrv_rmssd),
+      resting_hr: toNum(l.resting_hr),
+      deep_sleep_minutes: toNum(l.deep_sleep_minutes),
+      total_sleep_minutes: toNum(l.total_sleep_minutes),
+    })),
+    overrides,
+  );
 
   const sex = profile.biological_sex as BiologicalSex;
   const chronoAge = ageInYears(profile.date_of_birth, today);

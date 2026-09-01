@@ -1,13 +1,14 @@
-export const APP_TIMEZONE = "America/New_York";
+/** Fallback used only when a user has no saved profile yet — see lib/timezone.ts. */
+export const DEFAULT_TIMEZONE = "America/New_York";
 
-/** Local calendar date (YYYY-MM-DD) for an ISO timestamp, in APP_TIMEZONE. */
-export function localDateString(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-CA", { timeZone: APP_TIMEZONE });
+/** Local calendar date (YYYY-MM-DD) for an ISO timestamp, in the given timezone. */
+export function localDateString(iso: string, timezone: string = DEFAULT_TIMEZONE): string {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: timezone });
 }
 
-/** Today's local calendar date (YYYY-MM-DD) in APP_TIMEZONE. */
-export function todayLocalDateString(): string {
-  return localDateString(new Date().toISOString());
+/** Today's local calendar date (YYYY-MM-DD) in the given timezone. */
+export function todayLocalDateString(timezone: string = DEFAULT_TIMEZONE): string {
+  return localDateString(new Date().toISOString(), timezone);
 }
 
 /** N days before a YYYY-MM-DD date string, as a YYYY-MM-DD string. */
@@ -22,10 +23,10 @@ export function nextDayString(dateString: string): string {
   return daysBefore(dateString, -1);
 }
 
-/** Minutes that APP_TIMEZONE's wall clock reads ahead of UTC at the given instant (negative west of UTC). */
-function tzOffsetMinutes(instant: Date): number {
+/** Minutes that the timezone's wall clock reads ahead of UTC at the given instant (negative west of UTC). */
+function tzOffsetMinutes(instant: Date, timezone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: APP_TIMEZONE,
+    timeZone: timezone,
     hourCycle: "h23",
     year: "numeric",
     month: "2-digit",
@@ -52,31 +53,31 @@ function tzOffsetMinutes(instant: Date): number {
 }
 
 /**
- * The UTC instant (ISO string) of local midnight in APP_TIMEZONE on the given
+ * The UTC instant (ISO string) of local midnight in the given timezone on the given
  * YYYY-MM-DD date. Approximates the DST offset using midnight UTC as the reference
  * instant — off by at most an hour on the two DST-transition days per year, which is
  * an acceptable simplification for a personal dashboard.
  */
-export function localDayStartIso(dateString: string): string {
+export function localDayStartIso(dateString: string, timezone: string = DEFAULT_TIMEZONE): string {
   const utcMidnightGuess = new Date(`${dateString}T00:00:00Z`);
-  const offsetMinutes = tzOffsetMinutes(utcMidnightGuess);
+  const offsetMinutes = tzOffsetMinutes(utcMidnightGuess, timezone);
   return new Date(utcMidnightGuess.getTime() - offsetMinutes * 60_000).toISOString();
 }
 
 /** The UTC instant of local midnight the day after the given YYYY-MM-DD date. */
-export function localDayEndIso(dateString: string): string {
-  return localDayStartIso(nextDayString(dateString));
+export function localDayEndIso(dateString: string, timezone: string = DEFAULT_TIMEZONE): string {
+  return localDayStartIso(nextDayString(dateString), timezone);
 }
 
-/** Current wall-clock time (HH:MM:SS) in APP_TIMEZONE, comparable to a Postgres `time` column. */
-export function currentLocalTimeString(): string {
-  return new Date().toLocaleTimeString("en-GB", { timeZone: APP_TIMEZONE, hourCycle: "h23" });
+/** Current wall-clock time (HH:MM:SS) in the given timezone, comparable to a Postgres `time` column. */
+export function currentLocalTimeString(timezone: string = DEFAULT_TIMEZONE): string {
+  return new Date().toLocaleTimeString("en-GB", { timeZone: timezone, hourCycle: "h23" });
 }
 
-/** Local time-of-day in minutes since midnight (0-1439) for an ISO timestamp, in APP_TIMEZONE. */
-export function localMinutesOfDay(iso: string): number {
+/** Local time-of-day in minutes since midnight (0-1439) for an ISO timestamp, in the given timezone. */
+export function localMinutesOfDay(iso: string, timezone: string = DEFAULT_TIMEZONE): number {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: APP_TIMEZONE,
+    timeZone: timezone,
     hourCycle: "h23",
     hour: "2-digit",
     minute: "2-digit",

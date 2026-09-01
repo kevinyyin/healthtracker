@@ -49,6 +49,12 @@ export async function GET(request: NextRequest) {
       scope: tokens.scope,
       expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
       updated_at: new Date().toISOString(),
+      // A fresh consent flow proves the connection is healthy again — reset the
+      // circuit breaker (lib/google-health/sync.ts) so a prior revocation doesn't
+      // keep this user's sync disabled after they've just reconnected.
+      consecutive_failures: 0,
+      sync_disabled: false,
+      last_error: null,
     });
 
     if (error) throw error;

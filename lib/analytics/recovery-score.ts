@@ -1,3 +1,5 @@
+import { mean, stddev } from "@/lib/analytics/stats";
+
 export interface NightlyMetrics {
   date: string;
   hrv_rmssd: number | null;
@@ -14,16 +16,6 @@ const BASELINE_WINDOW_DAYS = 14;
 const MIN_NIGHTS_FOR_SCORE = 3;
 const HRV_WEIGHT = 0.6;
 const RHR_WEIGHT = 0.4;
-
-function mean(values: number[]): number {
-  return values.reduce((sum, v) => sum + v, 0) / values.length;
-}
-
-function stddev(values: number[], avg: number): number {
-  if (values.length < 2) return 0;
-  const variance = values.reduce((sum, v) => sum + (v - avg) ** 2, 0) / values.length;
-  return Math.sqrt(variance);
-}
 
 function logistic(z: number): number {
   return 100 / (1 + Math.exp(-z));

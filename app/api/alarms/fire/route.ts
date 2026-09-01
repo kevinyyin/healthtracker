@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { serverEnv } from "@/lib/env.server";
-import { currentLocalTimeString, isTimeInWindow, todayLocalDateString } from "@/lib/date";
+import { currentLocalTimeString, DEFAULT_TIMEZONE, isTimeInWindow, todayLocalDateString } from "@/lib/date";
 import { pickWakeTime } from "@/lib/alarms/schedule";
 import { sendPushToUser } from "@/lib/push/send";
 
@@ -33,11 +33,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const now = currentLocalTimeString();
-  const today = todayLocalDateString();
+  // An alarm's wake window must be compared against ITS OWN user's local time, not a
+  // single global now/today — fetch every enabled alarm's user's timezone up front.
+  const userIds = [...new Set((alarms ?? []).map((a: AlarmRow) => a.user_id))];
+  const { data: profileRows } = await admin.from("profiles").select("user_id, timezone").in("user_id", userIds);
+  const timezoneByUser = new Map((profileRows ?? []).map((p) => [p.user_id, p.timezone as string]));
 
   const results = await Promise.allSettled(
     (alarms ?? []).map(async (alarm: AlarmRow) => {
+      const timezone = timezoneByUser.get(alarm.user_id) ?? DEFAULT_TIMEZONE;
+      const now = currentLocalTimeString(timezone);
+      const today = todayLocalDateString(timezone);
+
       if (alarm.last_fired_date === today) {
         return { user_id: alarm.user_id, fired: false, reason: "already fired today" };
       }

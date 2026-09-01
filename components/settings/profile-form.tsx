@@ -1,26 +1,55 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { saveProfile } from "@/lib/actions/profile";
+import type { UnitSystem } from "@/lib/units";
 
 interface ProfileFormProps {
   initialDateOfBirth: string | null;
   initialBiologicalSex: "male" | "female" | null;
+  initialTimezone: string | null;
+  initialUnitSystem: UnitSystem;
 }
 
-export function ProfileForm({ initialDateOfBirth, initialBiologicalSex }: ProfileFormProps) {
+/** Falls back gracefully on older runtimes/browsers without Intl.supportedValuesOf. */
+function detectTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return "America/New_York";
+  }
+}
+
+function listTimezones(): string[] {
+  try {
+    return Intl.supportedValuesOf("timeZone");
+  } catch {
+    return [detectTimezone()];
+  }
+}
+
+export function ProfileForm({
+  initialDateOfBirth,
+  initialBiologicalSex,
+  initialTimezone,
+  initialUnitSystem,
+}: ProfileFormProps) {
   const [dateOfBirth, setDateOfBirth] = useState(initialDateOfBirth ?? "");
   const [biologicalSex, setBiologicalSex] = useState<"male" | "female" | null>(initialBiologicalSex);
+  const [timezone, setTimezone] = useState(initialTimezone ?? detectTimezone());
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>(initialUnitSystem);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const timezones = useMemo(() => listTimezones(), []);
+
   function handleSave() {
-    if (!dateOfBirth || !biologicalSex) return;
+    if (!dateOfBirth || !biologicalSex || !timezone) return;
     setError(null);
     startTransition(async () => {
       try {
-        await saveProfile({ dateOfBirth, biologicalSex });
+        await saveProfile({ dateOfBirth, biologicalSex, timezone, unitSystem });
         setSaved(true);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to save.");
@@ -46,7 +75,7 @@ export function ProfileForm({ initialDateOfBirth, initialBiologicalSex }: Profil
       <div className="flex flex-col gap-1 text-sm">
         Biological sex
         <div className="flex gap-1">
-          <SexToggle
+          <ChipToggle
             label="Female"
             active={biologicalSex === "female"}
             onClick={() => {
@@ -54,11 +83,55 @@ export function ProfileForm({ initialDateOfBirth, initialBiologicalSex }: Profil
               setSaved(false);
             }}
           />
-          <SexToggle
+          <ChipToggle
             label="Male"
             active={biologicalSex === "male"}
             onClick={() => {
               setBiologicalSex("male");
+              setSaved(false);
+            }}
+          />
+        </div>
+      </div>
+
+      <label className="flex flex-col gap-1 text-sm">
+        Timezone
+        <select
+          value={timezone}
+          onChange={(e) => {
+            setTimezone(e.target.value);
+            setSaved(false);
+          }}
+          className="field"
+        >
+          {timezones.map((tz) => (
+            <option key={tz} value={tz}>
+              {tz}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="text-xs text-foreground/50">
+        Used to compute your &quot;day&quot; and &quot;night&quot; boundaries for sleep and recovery. Update this
+        when you travel.
+      </p>
+
+      <div className="flex flex-col gap-1 text-sm">
+        Units
+        <div className="flex gap-1">
+          <ChipToggle
+            label="Metric"
+            active={unitSystem === "metric"}
+            onClick={() => {
+              setUnitSystem("metric");
+              setSaved(false);
+            }}
+          />
+          <ChipToggle
+            label="Imperial"
+            active={unitSystem === "imperial"}
+            onClick={() => {
+              setUnitSystem("imperial");
               setSaved(false);
             }}
           />
@@ -70,7 +143,7 @@ export function ProfileForm({ initialDateOfBirth, initialBiologicalSex }: Profil
       <button
         type="button"
         onClick={handleSave}
-        disabled={isPending || !dateOfBirth || !biologicalSex}
+        disabled={isPending || !dateOfBirth || !biologicalSex || !timezone}
         className="btn btn-primary w-fit"
       >
         {isPending ? "Saving..." : saved ? "Saved" : "Save"}
@@ -87,7 +160,7 @@ export function ProfileForm({ initialDateOfBirth, initialBiologicalSex }: Profil
   );
 }
 
-function SexToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function ChipToggle({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className={`chip ${active ? "chip-active" : ""}`}>
       {label}

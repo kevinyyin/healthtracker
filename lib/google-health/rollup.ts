@@ -18,13 +18,15 @@ interface StageMinutes {
   latencyMinutes: number | null;
 }
 
-interface StageSegment {
+export interface StageSegment {
   type: string;
   startTime: string;
   endTime: string;
 }
 
-function parseStageSegments(stageSummary: unknown): StageSegment[] {
+/** Exported for the sleep hypnogram (app/(app)/sleep/page.tsx), which re-reads the raw
+ *  segments this same parser also feeds into rollup's per-stage minute totals. */
+export function parseStageSegments(stageSummary: unknown): StageSegment[] {
   if (!Array.isArray(stageSummary)) return [];
   const segments: StageSegment[] = [];
   for (const entry of stageSummary) {
@@ -113,7 +115,7 @@ function average(values: (number | null)[]): number | null {
  * intraday_hr into a health_logs row. Upserts idempotently so late-arriving vitals
  * self-heal on the next sync.
  */
-export async function syncNightlyRollups(admin: SupabaseClient, userId: string): Promise<number> {
+export async function syncNightlyRollups(admin: SupabaseClient, userId: string, timezone: string): Promise<number> {
   const since = new Date(Date.now() - ROLLUP_LOOKBACK_MS).toISOString();
 
   const { data: sessions } = await admin
@@ -127,7 +129,7 @@ export async function syncNightlyRollups(admin: SupabaseClient, userId: string):
   let rollupCount = 0;
 
   for (const session of sessions) {
-    const date = localDateString(session.end_time);
+    const date = localDateString(session.end_time, timezone);
     const stages = parseStageMinutes(session.stage_summary, session.start_time);
     const totalSleepMinutes =
       (new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) / 60_000;
