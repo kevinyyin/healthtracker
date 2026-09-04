@@ -234,6 +234,10 @@ body {
     border-radius: 999px;
   }
 
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
   .chip {
     display: inline-flex;
     align-items: center;

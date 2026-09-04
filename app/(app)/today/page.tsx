@@ -71,7 +71,9 @@ export default async function TodayPage() {
       .order("date", { ascending: true }),
     supabase
       .from("health_log_overrides")
-      .select("date, hrv_rmssd, resting_hr, spo2, total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes")
+      .select(
+        "date, hrv_rmssd, resting_hr, spo2, total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes, wake_count, sleep_latency_minutes, sleep_start",
+      )
       .eq("user_id", user.id)
       .gte("date", daysBefore(today, BIO_AGE_HISTORY_DAYS)),
     supabase
@@ -115,6 +117,9 @@ export default async function TodayPage() {
     rem_sleep_minutes: toNum(o.rem_sleep_minutes),
     light_sleep_minutes: toNum(o.light_sleep_minutes),
     awake_minutes: toNum(o.awake_minutes),
+    wake_count: o.wake_count as number | null,
+    sleep_latency_minutes: toNum(o.sleep_latency_minutes),
+    sleep_start: o.sleep_start as string | null,
   }));
 
   // health_logs numeric columns come back as strings from PostgREST — coerce once here.

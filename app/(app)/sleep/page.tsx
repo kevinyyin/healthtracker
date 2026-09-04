@@ -14,6 +14,7 @@ import { MetricCard } from "@/components/metric-card";
 import { SleepStageChart, type SleepStageNight } from "@/components/charts/sleep-stage-chart";
 import { SleepHypnogram } from "@/components/charts/sleep-hypnogram";
 import { EmptyState } from "@/components/empty-state";
+import { CollapsibleSection } from "@/components/collapsible-section";
 
 const STAGE_CHART_NIGHTS = 14;
 // Wider than the stage chart's own window so the Timing factor's 14-night bedtime
@@ -43,7 +44,9 @@ export default async function SleepPage() {
         .limit(SLEEP_SCORE_HISTORY_DAYS),
       supabase
         .from("health_log_overrides")
-        .select("date, hrv_rmssd, resting_hr, spo2, total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes")
+        .select(
+          "date, hrv_rmssd, resting_hr, spo2, total_sleep_minutes, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes, wake_count, sleep_latency_minutes, sleep_start",
+        )
         .eq("user_id", user.id)
         .gte("date", daysBefore(today, SLEEP_SCORE_HISTORY_DAYS)),
       supabase.from("activity_status_periods").select("status, started_on, ended_on").eq("user_id", user.id),
@@ -68,6 +71,9 @@ export default async function SleepPage() {
     rem_sleep_minutes: toNum(o.rem_sleep_minutes),
     light_sleep_minutes: toNum(o.light_sleep_minutes),
     awake_minutes: toNum(o.awake_minutes),
+    wake_count: o.wake_count as number | null,
+    sleep_latency_minutes: toNum(o.sleep_latency_minutes),
+    sleep_start: o.sleep_start as string | null,
   }));
 
   const logs = applyOverrides(
@@ -130,7 +136,13 @@ export default async function SleepPage() {
           value={sleepScoreResult.score != null ? sleepScoreResult.score / 100 : null}
           display={sleepScoreResult.score != null ? `${sleepScoreResult.score}%` : "-"}
           label="Sleep Score"
-          sub={sleepScoreResult.confidence !== "full" ? "building timing baseline" : undefined}
+          sub={
+            sleepScoreResult.dataGapTonight
+              ? "incomplete data tonight"
+              : sleepScoreResult.confidence !== "full"
+                ? "building timing baseline"
+                : undefined
+          }
           color={RING_COLORS.sleep}
         />
       </div>
@@ -177,19 +189,21 @@ export default async function SleepPage() {
           hint="Once your Fitbit is connected and syncing, sleep sessions will show up here."
         />
       ) : (
-        <ul className="stagger-children flex flex-col divide-y divide-[var(--border)]">
-          {sessions.map((session) => (
-            <li key={session.id} className="flex items-center justify-between py-3">
-              <div>
-                <p className="font-medium">{formatDate(session.start_time)}</p>
-                <p className="text-sm text-foreground/60">
-                  {formatDateTime(session.start_time)} - {formatDateTime(session.end_time)}
-                </p>
-              </div>
-              <p className="figure text-lg font-semibold">{formatDuration(session.start_time, session.end_time)}</p>
-            </li>
-          ))}
-        </ul>
+        <CollapsibleSection summary={`Previous nights (${sessions.length})`}>
+          <ul className="stagger-children flex flex-col divide-y divide-[var(--border)]">
+            {sessions.map((session) => (
+              <li key={session.id} className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-medium">{formatDate(session.start_time)}</p>
+                  <p className="text-sm text-foreground/60">
+                    {formatDateTime(session.start_time)} - {formatDateTime(session.end_time)}
+                  </p>
+                </div>
+                <p className="figure text-lg font-semibold">{formatDuration(session.start_time, session.end_time)}</p>
+              </li>
+            ))}
+          </ul>
+        </CollapsibleSection>
       )}
     </main>
   );

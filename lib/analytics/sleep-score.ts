@@ -12,6 +12,9 @@ export interface SleepNightMetrics {
   rem_sleep_minutes: number | null;
   wake_count: number | null;
   sleep_latency_minutes: number | null;
+  // Optional — Today's page doesn't currently query this column (see hasDataGap below,
+  // which treats it as "unknown" rather than assuming 0 when a caller omits it).
+  light_sleep_minutes?: number | null;
 }
 
 export type SleepFactorKey = "total_sleep" | "efficiency" | "restfulness" | "rem" | "deep" | "latency" | "timing";
@@ -34,10 +37,16 @@ export interface SleepScoreResult {
   score: number | null;
   /** Always all 7, fixed order. */
   factors: SleepScoreFactor[];
-  /** Reflects the Timing factor's personal-baseline maturity only — the other 6
-   *  factors score against fixed bands, not a baseline, so they can't be "building." */
+  /** Reflects the Timing factor's personal-baseline maturity, capped at "building" if
+   *  tonight itself has a data gap (see dataGapTonight) — "full" should mean tonight's
+   *  own numbers are trustworthy, not just that the bedtime history is long enough. */
   confidence: "insufficient" | "building" | "full";
   nightsUsed: number;
+  /** True when the night's measured stage-minute coverage falls meaningfully short of
+   *  its total time-in-bed span — e.g. the watch was off-wrist mid-sleep — so
+   *  total_sleep_minutes (a pure end-start span, see rollup.ts) overstates how much was
+   *  actually measured. */
+  dataGapTonight: boolean;
 }
 
 const TIMING_BASELINE_WINDOW_DAYS = 14;
@@ -55,6 +64,28 @@ const WEIGHTS: Record<SleepFactorKey, number> = {
   latency: 5,
   timing: 5,
 };
+
+const DATA_GAP_THRESHOLD_MINUTES = 15;
+
+/** True when the night's measured stage-minute coverage falls short of its total
+ *  time-in-bed span by more than DATA_GAP_THRESHOLD_MINUTES — e.g. the watch was
+ *  off-wrist mid-sleep, so total_sleep_minutes (a pure end-start span, see rollup.ts)
+ *  silently overstates how much was actually measured. Only checked when all four
+ *  stage fields are present — a night with no stage data at all is a different
+ *  (already-handled, via null factor scores) problem, not a "gap." */
+function hasDataGap(n: SleepNightMetrics): boolean {
+  if (n.total_sleep_minutes == null) return false;
+  if (
+    n.deep_sleep_minutes == null ||
+    n.rem_sleep_minutes == null ||
+    n.light_sleep_minutes == null ||
+    n.awake_minutes == null
+  ) {
+    return false;
+  }
+  const measured = n.deep_sleep_minutes + n.rem_sleep_minutes + n.light_sleep_minutes + n.awake_minutes;
+  return n.total_sleep_minutes - measured > DATA_GAP_THRESHOLD_MINUTES;
+}
 
 /** True asleep minutes = time-in-bed minus awake time. Null if either input is
  *  missing, or if the subtraction would go negative (bad data). */
@@ -319,17 +350,23 @@ export function computeSleepScore(
   const rawScore =
     usableWeightSum === 0 ? null : factors.reduce((sum, f) => sum + (f.score ?? 0) * (f.weight / 100), 0);
 
-  const confidence: SleepScoreResult["confidence"] =
+  const baseConfidence: SleepScoreResult["confidence"] =
     timing.nightsUsed >= TIMING_BASELINE_WINDOW_DAYS
       ? "full"
       : timing.nightsUsed >= MIN_NIGHTS_FOR_TIMING
         ? "building"
         : "insufficient";
 
+  const dataGapTonight = hasDataGap(tonight);
+  // "full" should mean tonight's own numbers are trustworthy, not just that the
+  // bedtime baseline is mature — a gappy night caps confidence one tier down.
+  const confidence = dataGapTonight && baseConfidence === "full" ? "building" : baseConfidence;
+
   return {
     score: rawScore == null ? null : Math.max(0, Math.min(100, Math.round(rawScore))),
     factors,
     confidence,
     nightsUsed: timing.nightsUsed,
+    dataGapTonight,
   };
 }

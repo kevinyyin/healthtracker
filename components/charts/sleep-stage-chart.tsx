@@ -12,6 +12,14 @@ export interface SleepStageNight {
   awake: number | null;
 }
 
+function formatMinutes(value: unknown): string {
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes)) return String(value);
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 export function SleepStageChart({ nights }: { nights: SleepStageNight[] }) {
   if (nights.length === 0) return null;
 
@@ -29,6 +37,7 @@ export function SleepStageChart({ nights }: { nights: SleepStageNight[] }) {
             <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.4} />
             <YAxis tick={{ fontSize: 11 }} stroke="currentColor" opacity={0.4} unit="m" />
             <Tooltip
+              formatter={(value) => formatMinutes(value)}
               contentStyle={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",

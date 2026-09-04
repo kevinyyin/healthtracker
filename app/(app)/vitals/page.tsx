@@ -4,6 +4,7 @@ import { daysBefore, localDayEndIso, localDayStartIso, todayLocalDateString } fr
 import { getUserTimezone } from "@/lib/timezone";
 import { toNum } from "@/lib/numeric";
 import { EmptyState } from "@/components/empty-state";
+import { CollapsibleSection } from "@/components/collapsible-section";
 import { MetricCard } from "@/components/metric-card";
 import { HrHistoryChart } from "@/components/charts/hr-history-chart";
 
@@ -116,8 +117,7 @@ export default async function VitalsPage({
       </section>
 
       {readings && readings.length > 0 && (
-        <section>
-          <h2 className="eyebrow mb-2">Recent readings</h2>
+        <CollapsibleSection summary={`Recent readings (${readings.length})`}>
           <ul className="flex flex-col divide-y divide-[var(--border)]">
             {readings.slice(0, 30).map((reading) => (
               <li key={reading.id} className="flex items-center justify-between py-2 text-sm">
@@ -129,7 +129,7 @@ export default async function VitalsPage({
               </li>
             ))}
           </ul>
-        </section>
+        </CollapsibleSection>
       )}
     </main>
   );

@@ -27,6 +27,6 @@ export function computeStressTimeline(minutes: StressMinute[], restingHr: number
     }
     const excess = Math.max(0, bpm - restingHr);
     const stress = Math.min(100, Math.max(0, (excess / EXCESS_HR_FOR_MAX_STRESS) * 100));
-    return { minute, stress };
+    return { minute, stress: Math.round(stress * 10) / 10 };
   });
 }

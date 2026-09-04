@@ -14,6 +14,9 @@ interface FieldState {
   rem_sleep_minutes: string;
   light_sleep_minutes: string;
   awake_minutes: string;
+  wake_count: string;
+  sleep_latency_minutes: string;
+  sleep_start_time: string;
 }
 
 const EMPTY_FIELDS: FieldState = {
@@ -25,6 +28,9 @@ const EMPTY_FIELDS: FieldState = {
   rem_sleep_minutes: "",
   light_sleep_minutes: "",
   awake_minutes: "",
+  wake_count: "",
+  sleep_latency_minutes: "",
+  sleep_start_time: "",
 };
 
 function toNullableNumber(raw: string): number | null {
@@ -32,6 +38,11 @@ function toNullableNumber(raw: string): number | null {
   if (trimmed === "") return null;
   const n = Number(trimmed);
   return Number.isFinite(n) ? n : null;
+}
+
+function toNullableInt(raw: string): number | null {
+  const n = toNullableNumber(raw);
+  return n == null ? null : Math.round(n);
 }
 
 export function CorrectionDrawer({ today }: { today: string }) {
@@ -62,6 +73,9 @@ export function CorrectionDrawer({ today }: { today: string }) {
           rem_sleep_minutes: toNullableNumber(fields.rem_sleep_minutes),
           light_sleep_minutes: toNullableNumber(fields.light_sleep_minutes),
           awake_minutes: toNullableNumber(fields.awake_minutes),
+          wake_count: toNullableInt(fields.wake_count),
+          sleep_latency_minutes: toNullableNumber(fields.sleep_latency_minutes),
+          sleep_start_time: fields.sleep_start_time.trim() === "" ? null : fields.sleep_start_time,
         });
         setSaved(true);
       } catch (e) {
@@ -127,6 +141,31 @@ export function CorrectionDrawer({ today }: { today: string }) {
                 <NumberField label="Light" value={fields.light_sleep_minutes} onChange={(v) => setField("light_sleep_minutes", v)} />
                 <NumberField label="Awake" value={fields.awake_minutes} onChange={(v) => setField("awake_minutes", v)} />
               </div>
+            </div>
+
+            <div className="mb-4 flex flex-col gap-2">
+              <p className="eyebrow">Sleep detail</p>
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField label="Wake-ups" value={fields.wake_count} onChange={(v) => setField("wake_count", v)} />
+                <NumberField
+                  label="Latency (min)"
+                  value={fields.sleep_latency_minutes}
+                  onChange={(v) => setField("sleep_latency_minutes", v)}
+                />
+              </div>
+              <label className="flex flex-col gap-1 text-xs text-foreground/70">
+                Bedtime
+                <input
+                  type="time"
+                  value={fields.sleep_start_time}
+                  onChange={(e) => setField("sleep_start_time", e.target.value)}
+                  className="field"
+                />
+              </label>
+              <p className="text-xs text-foreground/50">
+                Before noon counts as an after-midnight bedtime on the date above; noon or later counts as the evening
+                before it.
+              </p>
             </div>
 
             <div className="mb-4 flex flex-col gap-2">
