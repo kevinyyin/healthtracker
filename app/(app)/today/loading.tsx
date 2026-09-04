@@ -1,8 +1,5 @@
 import { DEFAULT_WIDGET_KEYS } from "@/lib/dashboard-widgets";
-
-function SkeletonBlock({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-full bg-foreground/10 ${className}`} />;
-}
+import { SkeletonBlock } from "@/components/skeleton";
 
 export default function TodayLoading() {
   return (

@@ -41,7 +41,7 @@ export function computeEnergyBank(
     }
 
     battery = Math.min(100, Math.max(0, battery));
-    points.push({ minute: minute.minute, battery });
+    points.push({ minute: minute.minute, battery: Math.round(battery * 10) / 10 });
   }
 
   return points;

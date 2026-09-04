@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/supabase/server";
 import { todayLocalDateString } from "@/lib/date";
 import { getUserTimezone } from "@/lib/timezone";
+import { sleepStartIso } from "@/lib/health-log-overrides";
 
 export interface SaveHealthLogOverrideInput {
   date: string;
@@ -15,6 +16,12 @@ export interface SaveHealthLogOverrideInput {
   rem_sleep_minutes: number | null;
   light_sleep_minutes: number | null;
   awake_minutes: number | null;
+  wake_count: number | null;
+  sleep_latency_minutes: number | null;
+  /** Bedtime as a raw HH:MM time-of-day (paired with `date`, the wake date being
+   *  corrected) rather than a pre-built timestamp — see sleepStartIso for how the two
+   *  combine. Null means "no override," same convention as every other field here. */
+  sleep_start_time: string | null;
 }
 
 const FIELD_KEYS = [
@@ -26,6 +33,9 @@ const FIELD_KEYS = [
   "rem_sleep_minutes",
   "light_sleep_minutes",
   "awake_minutes",
+  "wake_count",
+  "sleep_latency_minutes",
+  "sleep_start_time",
 ] as const;
 
 function revalidateAffectedPaths() {
@@ -76,6 +86,9 @@ export async function saveHealthLogOverride(input: SaveHealthLogOverrideInput) {
       rem_sleep_minutes: input.rem_sleep_minutes,
       light_sleep_minutes: input.light_sleep_minutes,
       awake_minutes: input.awake_minutes,
+      wake_count: input.wake_count,
+      sleep_latency_minutes: input.sleep_latency_minutes,
+      sleep_start: input.sleep_start_time ? sleepStartIso(input.date, input.sleep_start_time, timezone) : null,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id,date" },

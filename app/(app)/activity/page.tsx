@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/supabase/server";
 import { formatDate, formatDuration } from "@/lib/format";
 import { formatDistance, getUserUnitSystem } from "@/lib/units";
 import { EmptyState } from "@/components/empty-state";
+import { ActivityIcon } from "@/components/activity-icon";
 
 export default async function ActivityPage() {
   const { supabase, user } = await requireUser();
@@ -32,8 +33,9 @@ export default async function ActivityPage() {
       ) : (
         <ul className="stagger-children flex flex-col divide-y divide-[var(--border)]">
           {sessions.map((session) => (
-            <li key={session.id} className="flex items-center justify-between py-3">
-              <div>
+            <li key={session.id} className="flex items-center gap-3 py-3">
+              <ActivityIcon type={session.type} />
+              <div className="flex-1">
                 <p className="font-medium">{session.type ?? "Workout"}</p>
                 <p className="text-sm text-foreground/60">{formatDate(session.start_time)}</p>
                 <p className="text-sm text-foreground/60">

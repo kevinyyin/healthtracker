@@ -53,15 +53,24 @@ function tzOffsetMinutes(instant: Date, timezone: string): number {
 }
 
 /**
+ * The UTC instant (ISO string) of a given HH:MM wall-clock time on a given YYYY-MM-DD
+ * date, in the given timezone. Same DST-offset approximation as localDayStartIso
+ * (below, which is just this called with "00:00").
+ */
+export function localDateTimeToIso(dateString: string, timeString: string, timezone: string = DEFAULT_TIMEZONE): string {
+  const utcGuess = new Date(`${dateString}T${timeString}:00Z`);
+  const offsetMinutes = tzOffsetMinutes(utcGuess, timezone);
+  return new Date(utcGuess.getTime() - offsetMinutes * 60_000).toISOString();
+}
+
+/**
  * The UTC instant (ISO string) of local midnight in the given timezone on the given
  * YYYY-MM-DD date. Approximates the DST offset using midnight UTC as the reference
  * instant — off by at most an hour on the two DST-transition days per year, which is
  * an acceptable simplification for a personal dashboard.
  */
 export function localDayStartIso(dateString: string, timezone: string = DEFAULT_TIMEZONE): string {
-  const utcMidnightGuess = new Date(`${dateString}T00:00:00Z`);
-  const offsetMinutes = tzOffsetMinutes(utcMidnightGuess, timezone);
-  return new Date(utcMidnightGuess.getTime() - offsetMinutes * 60_000).toISOString();
+  return localDateTimeToIso(dateString, "00:00", timezone);
 }
 
 /** The UTC instant of local midnight the day after the given YYYY-MM-DD date. */

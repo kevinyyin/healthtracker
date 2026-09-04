@@ -1,3 +1,5 @@
+import { daysBefore, localDateTimeToIso } from "@/lib/date";
+
 export interface HealthLogOverride {
   date: string;
   hrv_rmssd: number | null;
@@ -8,6 +10,13 @@ export interface HealthLogOverride {
   rem_sleep_minutes: number | null;
   light_sleep_minutes: number | null;
   awake_minutes: number | null;
+  // Optional — only the Today and Sleep pages read these 3 Sleep Score inputs
+  // (Restfulness/Latency/Timing factors); Trends and Biological Age don't select
+  // these columns from health_log_overrides at all, so their override objects omit
+  // them entirely rather than always fetching columns they'd never use.
+  wake_count?: number | null;
+  sleep_latency_minutes?: number | null;
+  sleep_start?: string | null;
 }
 
 const OVERRIDE_KEYS = [
@@ -19,7 +28,25 @@ const OVERRIDE_KEYS = [
   "rem_sleep_minutes",
   "light_sleep_minutes",
   "awake_minutes",
+  "wake_count",
+  "sleep_latency_minutes",
+  "sleep_start",
 ] as const satisfies readonly (keyof Omit<HealthLogOverride, "date">)[];
+
+/**
+ * The correction drawer only asks for bedtime as a time-of-day, paired with the date
+ * being corrected — which is the *wake* date (see rollup.ts's `date =
+ * localDateString(session.end_time, timezone)`). A typical bedtime is the evening
+ * *before* the wake date, so a time-of-day >= noon is interpreted as the previous
+ * calendar day and a time-of-day < noon as the wake date itself (an after-midnight
+ * bedtime) — the same noon-boundary convention sleep-score.ts's
+ * continuousBedtimeMinutes() already uses.
+ */
+export function sleepStartIso(wakeDate: string, timeString: string, timezone: string): string {
+  const [hh, mm] = timeString.split(":").map(Number);
+  const bedtimeDate = hh * 60 + mm >= 12 * 60 ? daysBefore(wakeDate, 1) : wakeDate;
+  return localDateTimeToIso(bedtimeDate, timeString, timezone);
+}
 
 /**
  * Merges a manual correction on top of synced health_logs rows, matched by date. Only

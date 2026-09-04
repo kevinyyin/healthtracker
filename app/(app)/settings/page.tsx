@@ -23,7 +23,7 @@ export default async function SettingsPage({
         .maybeSingle(),
       supabase
         .from("sync_log")
-        .select("started_at, finished_at, status, domains, error")
+        .select("started_at, finished_at, status, error")
         .eq("user_id", user.id)
         .order("started_at", { ascending: false })
         .limit(1)
@@ -77,7 +77,6 @@ export default async function SettingsPage({
             <p>
               {formatDateTime(lastSync.started_at)} - {lastSync.status}
             </p>
-            {lastSync.domains ? <p>{JSON.stringify(lastSync.domains)}</p> : null}
             {lastSync.error ? <p className="text-danger">{lastSync.error}</p> : null}
           </div>
         ) : (
