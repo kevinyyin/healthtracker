@@ -5,6 +5,7 @@ export const WIDGET_CATALOG = [
   { key: "energy_bank", label: "Energy Bank" },
   { key: "workout_recommendation", label: "Target Strain" },
   { key: "bio_age", label: "Biological Age" },
+  { key: "vo2max", label: "Cardio Fitness (VO2max)" },
   { key: "hrv", label: "HRV" },
   { key: "resting_hr", label: "Resting Heart Rate" },
   { key: "sleep_debt", label: "Sleep Debt" },

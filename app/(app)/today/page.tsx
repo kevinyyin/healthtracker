@@ -4,13 +4,14 @@ import { ageInYears, daysBefore, DEFAULT_TIMEZONE, localDayEndIso, localDayStart
 import { formatDate, formatRelativeTime } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeRecoveryScore, type NightlyMetrics } from "@/lib/analytics/recovery-score";
-import { computeDayStrain, type HrSample } from "@/lib/analytics/day-strain";
+import { computeDayStrain, resolveMaxHr, type HrSample } from "@/lib/analytics/day-strain";
 import { computeSleepTarget } from "@/lib/analytics/sleep-debt";
 import { computeSleepScore, type SleepNightMetrics } from "@/lib/analytics/sleep-score";
 import { computeEnergyBank } from "@/lib/analytics/energy-bank";
 import { computeStressTimeline } from "@/lib/analytics/stress-score";
 import { computeHabitCorrelations, type JournalDay, type OutcomeDay } from "@/lib/analytics/habit-correlations";
 import { computeBiologicalAge, type BiologicalSex } from "@/lib/analytics/biological-age";
+import { computeVo2Max } from "@/lib/analytics/vo2max";
 import { computeIllnessSignal } from "@/lib/analytics/illness-signal";
 import { recoveryGuidance, sleepGuidance } from "@/lib/analytics/coaching";
 import { excludedDatesFromPeriods } from "@/lib/activity-status";
@@ -37,7 +38,7 @@ export default async function TodayPage() {
   // used to bound several of those queries — depend on the user's own timezone.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("date_of_birth, biological_sex, timezone")
+    .select("date_of_birth, biological_sex, timezone, max_hr")
     .eq("user_id", user.id)
     .maybeSingle();
   const timezone = profile?.timezone ?? DEFAULT_TIMEZONE;
@@ -58,7 +59,7 @@ export default async function TodayPage() {
     supabase
       .from("health_logs")
       .select(
-        "date, hrv_rmssd, resting_hr, spo2, sleep_start, deep_sleep_minutes, rem_sleep_minutes, awake_minutes, total_sleep_minutes, wake_count, sleep_latency_minutes",
+        "date, hrv_rmssd, resting_hr, spo2, sleep_start, deep_sleep_minutes, rem_sleep_minutes, light_sleep_minutes, awake_minutes, total_sleep_minutes, wake_count, sleep_latency_minutes",
       )
       .eq("user_id", user.id)
       .order("date", { ascending: false })
@@ -133,6 +134,7 @@ export default async function TodayPage() {
       sleep_start: l.sleep_start as string | null,
       deep_sleep_minutes: toNum(l.deep_sleep_minutes),
       rem_sleep_minutes: toNum(l.rem_sleep_minutes),
+      light_sleep_minutes: toNum(l.light_sleep_minutes),
       awake_minutes: toNum(l.awake_minutes),
       total_sleep_minutes: toNum(l.total_sleep_minutes),
       wake_count: l.wake_count as number | null,
@@ -151,8 +153,10 @@ export default async function TodayPage() {
     inWorkout: s.activity_session_id != null,
   }));
 
+  const maxHr = resolveMaxHr(profile?.date_of_birth ?? null, today, profile?.max_hr ?? null);
+
   const hrSamples: HrSample[] = intraday.map((s) => ({ recorded_at: s.recorded_at, bpm: s.bpm }));
-  const dayStrain = computeDayStrain(hrSamples);
+  const dayStrain = computeDayStrain(hrSamples, maxHr);
 
   const last3Nights = logs.slice(0, 3).map((l) => ({ date: l.date, total_sleep_minutes: l.total_sleep_minutes }));
   const sleepTarget = computeSleepTarget(last3Nights, dayStrain.strain);
@@ -173,7 +177,7 @@ export default async function TodayPage() {
   const sleepScoreResult = computeSleepScore(logs, tonightSleep, sleepTarget.targetMinutes, excludedDates, timezone);
 
   const energyTimeline = intraday.map((s) => ({ minute: s.recorded_at, bpm: s.bpm, activeCalories: null }));
-  const battery = computeEnergyBank(energyTimeline, recovery.score ?? DEFAULT_START_BATTERY);
+  const battery = computeEnergyBank(energyTimeline, recovery.score ?? DEFAULT_START_BATTERY, maxHr);
 
   const stressMinutes = intraday.map((s) => ({ minute: s.recorded_at, bpm: s.bpm, inWorkout: s.inWorkout }));
   const stress = computeStressTimeline(stressMinutes, tonight.resting_hr);
@@ -217,6 +221,8 @@ export default async function TodayPage() {
       )
     : null;
 
+  const vo2max = profile ? computeVo2Max(bioAgeLogs, today, maxHr, excludedDates) : null;
+
   const habitsToday = journalDays.find((j) => j.date === today)?.habits ?? [];
   const habitsYesterday = journalDays.find((j) => j.date === yesterday)?.habits ?? [];
 
@@ -229,6 +235,7 @@ export default async function TodayPage() {
     sleepScore: sleepScoreResult.score,
     hasSleepHistory,
     bioAge: bioAgeResult,
+    vo2max,
     hrv: tonight.hrv_rmssd,
     restingHr: tonight.resting_hr,
     chartData,

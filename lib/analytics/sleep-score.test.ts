@@ -158,3 +158,45 @@ describe("computeSleepScore — data gap detection", () => {
     expect(result.confidence).toBe("full");
   });
 });
+
+describe("computeSleepScore — Timing factor is order-independent", () => {
+  // Regression test for a real bug: today/page.tsx and sleep/page.tsx both fetch
+  // health_logs newest-first (descending) and pass that straight through as
+  // `history`, but computeTimingFactor's `.filter(...).slice(-N)` only means "the N
+  // most recent prior nights" if `history` is ascending. Unsorted, it silently used
+  // the OLDEST N nights within the fetched window instead. The fix sorts `history`
+  // internally, so the caller's order must no longer matter.
+  const TONIGHT_BEDTIME = `${TONIGHT_DATE}T04:00:00Z`; // matches fullNight()'s default
+
+  function nightsWithBedtimes(): SleepNightMetrics[] {
+    // 1-14 days ago: same bedtime as tonight (04:00Z) -> the TRUE recent baseline.
+    // 15-19 days ago: a very different bedtime (10:00Z) -> stale data that should be
+    // excluded once only the 14 most recent prior nights are used.
+    const recent = Array.from({ length: 14 }, (_, i) => {
+      const date = daysBefore(TONIGHT_DATE, i + 1);
+      return fullNight({ date, sleep_start: `${date}T04:00:00Z` });
+    });
+    const stale = Array.from({ length: 5 }, (_, i) => {
+      const date = daysBefore(TONIGHT_DATE, i + 15);
+      return fullNight({ date, sleep_start: `${date}T10:00:00Z` });
+    });
+    return [...recent, ...stale];
+  }
+
+  it("uses only the 14 most recent nights when history is fed descending (as the real pages do)", () => {
+    const descending = [...nightsWithBedtimes()].sort((a, b) => (a.date < b.date ? 1 : -1));
+    const result = computeSleepScore(descending, fullNight({ sleep_start: TONIGHT_BEDTIME }), TARGET_MINUTES);
+    // Tonight's bedtime matches every one of the true 14-night baseline exactly ->
+    // zero deviation -> the top Timing band (score 100). The bug would have mixed in
+    // the 5 stale 10:00Z nights, producing a nonzero deviation and a lower score.
+    expect(factor(result, "timing").score).toBe(100);
+    expect(factor(result, "timing").rawValue).toBe(0);
+  });
+
+  it("produces the identical result when history is fed ascending", () => {
+    const ascending = [...nightsWithBedtimes()].sort((a, b) => (a.date < b.date ? -1 : 1));
+    const result = computeSleepScore(ascending, fullNight({ sleep_start: TONIGHT_BEDTIME }), TARGET_MINUTES);
+    expect(factor(result, "timing").score).toBe(100);
+    expect(factor(result, "timing").rawValue).toBe(0);
+  });
+});

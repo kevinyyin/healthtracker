@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { refreshAccessToken, isPermanentAuthError } from "@/lib/google-health/oauth";
 import { syncSleep, syncActivity, syncIntradayHr, syncSparseVitals, tagActiveCalories } from "@/lib/google-health/ingest";
 import { syncNightlyRollups } from "@/lib/google-health/rollup";
+import { evaluateAndSendAlerts } from "@/lib/google-health/alerts";
 import { getUserTimezone } from "@/lib/timezone";
 
 interface TokenRow {
@@ -155,6 +156,7 @@ export async function syncUser(admin: SupabaseClient, token: TokenRow): Promise<
 
     await tagActiveCalories(admin, token.user_id);
     const rollupCount = await syncNightlyRollups(admin, token.user_id, timezone);
+    await evaluateAndSendAlerts(admin, token.user_id, timezone);
 
     await markTokenHealthy(admin, token.user_id);
 

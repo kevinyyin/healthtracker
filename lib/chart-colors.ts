@@ -8,6 +8,7 @@ export const SLEEP_STAGE_COLORS = {
 export const BATTERY_COLOR = "#5c7a8c";
 export const STRESS_COLOR = "#b8925a";
 export const BIO_AGE_COLOR = "#8c6478";
+export const VO2MAX_COLOR = "#4d7a5a";
 export const CHRONO_AGE_COLOR = "#a39a8c";
 export const METRIC_TREND_COLOR = "#52847c";
 
@@ -16,4 +17,5 @@ export const RING_COLORS = {
   recovery: "var(--color-success)",
   sleep: BATTERY_COLOR,
   bioAge: BIO_AGE_COLOR,
+  vo2max: VO2MAX_COLOR,
 } as const;

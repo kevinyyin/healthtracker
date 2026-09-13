@@ -6,7 +6,7 @@ export interface SleepNight {
 export const BASELINE_MINUTES = 480; // 8 hours
 const MAX_DEBT_REPAYMENT_MINUTES = 120;
 const DEBT_REPAYMENT_FRACTION = 1 / 3;
-const EXERTION_MINUTES_PER_STRAIN_POINT = 6;
+const EXERTION_MINUTES_PER_STRAIN_POINT = 1.26; // 6 min/point on Strain's old 0-21 scale, rescaled to 0-100
 const MIN_TARGET_MINUTES = 360;
 const MAX_TARGET_MINUTES = 600;
 

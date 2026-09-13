@@ -46,11 +46,11 @@ describe("computeSleepTarget", () => {
 
   it("adds an exertion penalty scaled by today's strain", () => {
     const result = computeSleepTarget([], 10);
-    expect(result.targetMinutes).toBe(480 + 10 * 6);
+    expect(result.targetMinutes).toBe(480 + 10 * 1.26);
   });
 
   it("clamps the target at MAX_TARGET_MINUTES for very high strain", () => {
-    const result = computeSleepTarget([], 50);
+    const result = computeSleepTarget([], 100);
     expect(result.targetMinutes).toBe(600);
   });
 });

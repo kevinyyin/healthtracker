@@ -30,7 +30,7 @@ export default async function SettingsPage({
         .maybeSingle(),
       supabase
         .from("profiles")
-        .select("date_of_birth, biological_sex, timezone, unit_system")
+        .select("date_of_birth, biological_sex, timezone, unit_system, max_hr")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase.from("alarms").select("enabled, wake_from, wake_to").eq("user_id", user.id).maybeSingle(),
@@ -91,6 +91,7 @@ export default async function SettingsPage({
           initialBiologicalSex={(profile?.biological_sex as "male" | "female" | null) ?? null}
           initialTimezone={profile?.timezone ?? null}
           initialUnitSystem={(profile?.unit_system as UnitSystem | undefined) ?? "metric"}
+          initialMaxHr={profile?.max_hr ?? null}
         />
       </section>
 

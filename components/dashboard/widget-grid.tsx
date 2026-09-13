@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { RecoveryResult } from "@/lib/analytics/recovery-score";
 import type { SleepTargetResult } from "@/lib/analytics/sleep-debt";
 import type { BiologicalAgeResult } from "@/lib/analytics/biological-age";
+import type { Vo2MaxResult } from "@/lib/analytics/vo2max";
 import { recommendTargetStrain } from "@/lib/analytics/day-strain";
 import type { WidgetKey } from "@/lib/dashboard-widgets";
 import { RING_COLORS } from "@/lib/chart-colors";
@@ -11,10 +12,11 @@ import { MetricCard } from "@/components/metric-card";
 import { BaselineProgress } from "@/components/baseline-progress";
 import { WorkoutRecommender } from "@/components/dashboard/workout-recommender";
 import { BioAgeTeaser } from "@/components/dashboard/bio-age-teaser";
+import { Vo2MaxTeaser } from "@/components/dashboard/vo2max-teaser";
 import { DailyGuidance } from "@/components/dashboard/daily-guidance";
 import { StressBatteryChart, type StressBatteryPoint } from "@/components/charts/stress-battery-chart";
 
-const STRAIN_MAX = 21;
+const STRAIN_MAX = 100;
 const RECOVERY_BASELINE_TARGET = 14;
 
 // Widgets that need the full row width (a chart, or a short paragraph of text) rather than one grid cell.
@@ -33,6 +35,7 @@ export interface WidgetData {
   sleepScore: number | null;
   hasSleepHistory: boolean;
   bioAge: BiologicalAgeResult | null;
+  vo2max: Vo2MaxResult | null;
   hrv: number | null;
   restingHr: number | null;
   chartData: StressBatteryPoint[];
@@ -50,7 +53,7 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
         <div className="card flex h-full items-center justify-center p-4">
           <ScoreRing
             value={data.strainSampleCount > 0 ? data.strain / STRAIN_MAX : null}
-            display={data.strainSampleCount > 0 ? data.strain.toFixed(1) : "-"}
+            display={data.strainSampleCount > 0 ? Math.round(data.strain).toString() : "-"}
             label="Strain"
             sub={`of ${STRAIN_MAX}`}
             color={RING_COLORS.strain}
@@ -102,6 +105,8 @@ function renderWidget(key: WidgetKey, data: WidgetData): ReactNode {
       return <WorkoutRecommender recovery={data.recovery.score} />;
     case "bio_age":
       return <BioAgeTeaser result={data.bioAge} />;
+    case "vo2max":
+      return <Vo2MaxTeaser result={data.vo2max} />;
     case "hrv":
       return <MetricCard label="HRV" value={data.hrv != null ? `${data.hrv.toFixed(0)} ms` : "-"} href="/vitals" />;
     case "resting_hr":

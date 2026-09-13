@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/activity", label: "Activity" },
   { href: "/vitals", label: "Vitals" },
   { href: "/trends", label: "Trends" },
+  { href: "/recap", label: "Recap" },
   { href: "/biological-age", label: "Bio Age" },
   { href: "/settings", label: "Settings" },
 ] as const;
@@ -20,7 +21,7 @@ export function Nav({ currentStatus }: { currentStatus: ActivityStatus }) {
   const pathname = usePathname();
 
   return (
-    <nav className="flex items-center justify-between border-b border-[var(--border)] bg-background px-4 pb-3 [padding-top:calc(0.75rem+env(safe-area-inset-top))]">
+    <nav className="flex items-center justify-between border-b border-[var(--border)] bg-background px-4 pb-3 [padding-top:calc(0.75rem+env(safe-area-inset-top))] print:hidden">
       <div className="hidden gap-1 md:flex">
         {LINKS.map(({ href, label }) => {
           const active = pathname === href;

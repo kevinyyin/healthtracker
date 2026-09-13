@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
       await sendPushToUser(admin, alarm.user_id, {
         title: "Wake up",
         body: "Your Smart Alarm went off.",
+        tag: "smart-alarm",
       });
       await admin.from("alarms").update({ last_fired_date: today }).eq("user_id", alarm.user_id);
 
