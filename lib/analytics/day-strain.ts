@@ -1,3 +1,5 @@
+import { ageInYears } from "@/lib/date";
+
 export interface HrSample {
   recorded_at: string;
   bpm: number;
@@ -14,6 +16,17 @@ export const HR_ZONES = [
 
 export const DEFAULT_MAX_HR = 202; // 220 - age(18)
 
+/**
+ * Resolves the max HR to use for zone math: a user's manual override if they've set
+ * one, else the age-based estimate (220 - age), else DEFAULT_MAX_HR for a user with
+ * no profile yet.
+ */
+export function resolveMaxHr(dob: string | null, asOfDate: string, override: number | null): number {
+  if (override != null) return override;
+  if (dob != null) return 220 - ageInYears(dob, asOfDate);
+  return DEFAULT_MAX_HR;
+}
+
 /** Returns 0 (below Zone 1) through 5 for a given bpm relative to max HR. */
 export function hrZone(bpm: number, maxHr: number = DEFAULT_MAX_HR): 0 | 1 | 2 | 3 | 4 | 5 {
   const pct = bpm / maxHr;
@@ -28,7 +41,7 @@ function zoneWeight(zone: 0 | 1 | 2 | 3 | 4 | 5): number {
   return HR_ZONES[zone - 1].weight;
 }
 
-const STRAIN_SCALE = 21;
+const STRAIN_SCALE = 100;
 const STRAIN_K = 750;
 
 export interface DayStrainResult {
@@ -39,7 +52,7 @@ export interface DayStrainResult {
 
 /**
  * Sums exponentially-weighted HR-zone minutes across the day, then squashes the total
- * onto a 0-21 scale that approaches (but never quite reaches) 21 — matching the
+ * onto a 0-100 scale that approaches (but never quite reaches) 100 — matching the
  * asymptotic feel of a bounded strain score under sustained high-zone effort.
  */
 export function computeDayStrain(samples: HrSample[], maxHr: number = DEFAULT_MAX_HR): DayStrainResult {
@@ -66,13 +79,13 @@ export interface StrainTarget {
 /** Suggests a target Strain range for today based on last night's Recovery Score. */
 export function recommendTargetStrain(recovery: number | null): StrainTarget {
   if (recovery == null) {
-    return { min: 10.0, max: 14.0, label: "Building baseline, moderate effort suggested" };
+    return { min: 45, max: 65, label: "Building baseline, moderate effort suggested" };
   }
   if (recovery < 34) {
-    return { min: 6.0, max: 9.0, label: "Low recovery, take it easy" };
+    return { min: 30, max: 45, label: "Low recovery, take it easy" };
   }
   if (recovery < 67) {
-    return { min: 10.0, max: 14.0, label: "Moderate recovery, steady effort" };
+    return { min: 45, max: 65, label: "Moderate recovery, steady effort" };
   }
-  return { min: 15.0, max: 18.0, label: "High recovery, push today" };
+  return { min: 70, max: 85, label: "High recovery, push today" };
 }

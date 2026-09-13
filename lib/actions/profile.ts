@@ -10,9 +10,12 @@ export interface SaveProfileInput {
   biologicalSex: "male" | "female";
   timezone: string;
   unitSystem: UnitSystem;
+  maxHr: number | null;
 }
 
 const MAX_AGE_YEARS = 120;
+const MIN_MAX_HR = 100;
+const MAX_MAX_HR = 230;
 
 function isValidTimezone(timezone: string): boolean {
   try {
@@ -48,6 +51,9 @@ export async function saveProfile(input: SaveProfileInput) {
   if (input.unitSystem !== "metric" && input.unitSystem !== "imperial") {
     throw new Error("Invalid unit system.");
   }
+  if (input.maxHr != null && (input.maxHr < MIN_MAX_HR || input.maxHr > MAX_MAX_HR)) {
+    throw new Error(`Max heart rate must be between ${MIN_MAX_HR} and ${MAX_MAX_HR}.`);
+  }
 
   const { error } = await supabase.from("profiles").upsert(
     {
@@ -56,6 +62,7 @@ export async function saveProfile(input: SaveProfileInput) {
       biological_sex: input.biologicalSex,
       timezone: input.timezone,
       unit_system: input.unitSystem,
+      max_hr: input.maxHr,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },

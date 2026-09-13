@@ -1,4 +1,5 @@
 import { DEFAULT_TIMEZONE, localMinutesOfDay } from "@/lib/date";
+import { sortByDateAscending } from "@/lib/analytics/stats";
 
 export interface SleepNightMetrics {
   date: string;
@@ -272,7 +273,7 @@ function computeTimingFactor(
   excludedDates: Set<string> | undefined,
   timezone: string,
 ) {
-  const baseline = history
+  const baseline = sortByDateAscending(history)
     .filter((n) => n.date < tonight.date && !excludedDates?.has(n.date) && n.sleep_start != null)
     .slice(-TIMING_BASELINE_WINDOW_DAYS);
 

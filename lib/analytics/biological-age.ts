@@ -1,4 +1,5 @@
 import { BASELINE_MINUTES } from "@/lib/analytics/sleep-debt";
+import { sortByDateAscending } from "@/lib/analytics/stats";
 import { ageInYears } from "@/lib/date";
 
 export type BiologicalSex = "male" | "female";
@@ -158,7 +159,7 @@ export function computeBiologicalAge(
   sex: BiologicalSex,
   excludedDates?: Set<string>,
 ): BiologicalAgeResult {
-  const baseline = history
+  const baseline = sortByDateAscending(history)
     .filter((n) => n.date < asOfDate && !excludedDates?.has(n.date))
     .slice(-BASELINE_WINDOW_DAYS);
 

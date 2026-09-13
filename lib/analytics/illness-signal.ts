@@ -1,4 +1,4 @@
-import { mean, stddev, zScore } from "@/lib/analytics/stats";
+import { mean, stddev, zScore, sortByDateAscending } from "@/lib/analytics/stats";
 
 export interface IllnessNightlyMetrics {
   date: string;
@@ -41,7 +41,7 @@ export function computeIllnessSignal(
   tonight: IllnessNightlyMetrics,
   excludedDates?: Set<string>,
 ): IllnessSignalResult {
-  const baseline = history
+  const baseline = sortByDateAscending(history)
     .filter((n) => n.date < tonight.date && !excludedDates?.has(n.date))
     .slice(-BASELINE_WINDOW_DAYS);
 

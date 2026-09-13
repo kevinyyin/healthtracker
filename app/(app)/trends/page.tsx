@@ -5,6 +5,8 @@ import { formatDate } from "@/lib/format";
 import { toNum } from "@/lib/numeric";
 import { computeRecoveryScore } from "@/lib/analytics/recovery-score";
 import { computeBiologicalAgeTrend, type BiologicalSex } from "@/lib/analytics/biological-age";
+import { computeVo2MaxTrend } from "@/lib/analytics/vo2max";
+import { resolveMaxHr } from "@/lib/analytics/day-strain";
 import { excludedDatesFromPeriods } from "@/lib/activity-status";
 import { applyOverrides } from "@/lib/health-log-overrides";
 import { MetricTrendChart, type TrendPoint } from "@/components/charts/metric-trend-chart";
@@ -17,6 +19,7 @@ const METRICS = [
   { key: "deep_sleep", label: "Deep Sleep" },
   { key: "recovery", label: "Recovery Score" },
   { key: "bio_age", label: "Biological Age" },
+  { key: "vo2max", label: "VO2max" },
 ] as const;
 type MetricKey = (typeof METRICS)[number]["key"];
 
@@ -54,7 +57,7 @@ export default async function TrendsPage({
   // on the user's own timezone.
   const { data: profile } = await supabase
     .from("profiles")
-    .select("date_of_birth, biological_sex, timezone")
+    .select("date_of_birth, biological_sex, timezone, max_hr")
     .eq("user_id", user.id)
     .maybeSingle();
   const today = todayLocalDateString(profile?.timezone ?? DEFAULT_TIMEZONE);
@@ -116,7 +119,7 @@ export default async function TrendsPage({
   }
 
   const cutoff = daysBefore(today, range.days);
-  const points = computeSeries(metric.key, logs, cutoff, range.days, profile, excludedDates);
+  const points = computeSeries(metric.key, logs, cutoff, range.days, profile, today, excludedDates);
 
   const displayPoints: TrendPoint[] = points.map((p) => ({
     date: formatDate(p.date),
@@ -149,10 +152,10 @@ export default async function TrendsPage({
         ))}
       </div>
 
-      {metric.key === "bio_age" && !profile ? (
+      {(metric.key === "bio_age" || metric.key === "vo2max") && !profile ? (
         <EmptyState
           title="Add your profile to see this"
-          hint="Enter your date of birth and biological sex in Settings to see Biological Age trends."
+          hint="Enter your date of birth in Settings to see this trend."
         />
       ) : !hasData ? (
         <EmptyState title="Not enough data yet" hint="Keep syncing — this metric needs a few more days of history." />
@@ -170,7 +173,8 @@ function computeSeries(
   logs: HealthLogRow[],
   cutoff: string,
   rangeDays: number,
-  profile: { date_of_birth: string; biological_sex: string } | null,
+  profile: { date_of_birth: string; biological_sex: string; max_hr: number | null } | null,
+  today: string,
   excludedDates: Set<string>,
 ): { date: string; value: number | null }[] {
   const visible = logs.filter((l) => l.date >= cutoff);
@@ -200,6 +204,12 @@ function computeSeries(
         excludedDates,
       );
       return trend.map((t) => ({ date: t.date, value: t.bioAge }));
+    }
+    case "vo2max": {
+      if (!profile) return [];
+      const maxHr = resolveMaxHr(profile.date_of_birth, today, profile.max_hr);
+      const trend = computeVo2MaxTrend(logs, maxHr, rangeDays, excludedDates);
+      return trend.map((t) => ({ date: t.date, value: t.vo2max }));
     }
   }
 }

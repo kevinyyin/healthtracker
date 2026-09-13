@@ -1,4 +1,4 @@
-import { mean, stddev } from "@/lib/analytics/stats";
+import { mean, stddev, sortByDateAscending } from "@/lib/analytics/stats";
 
 export interface NightlyMetrics {
   date: string;
@@ -33,7 +33,7 @@ export function computeRecoveryScore(
   tonight: NightlyMetrics,
   excludedDates?: Set<string>,
 ): RecoveryResult {
-  const baseline = history
+  const baseline = sortByDateAscending(history)
     .filter((n) => n.date < tonight.date && !excludedDates?.has(n.date))
     .slice(-BASELINE_WINDOW_DAYS);
 

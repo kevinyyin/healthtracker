@@ -9,6 +9,7 @@ interface ProfileFormProps {
   initialBiologicalSex: "male" | "female" | null;
   initialTimezone: string | null;
   initialUnitSystem: UnitSystem;
+  initialMaxHr: number | null;
 }
 
 /** Falls back gracefully on older runtimes/browsers without Intl.supportedValuesOf. */
@@ -33,11 +34,13 @@ export function ProfileForm({
   initialBiologicalSex,
   initialTimezone,
   initialUnitSystem,
+  initialMaxHr,
 }: ProfileFormProps) {
   const [dateOfBirth, setDateOfBirth] = useState(initialDateOfBirth ?? "");
   const [biologicalSex, setBiologicalSex] = useState<"male" | "female" | null>(initialBiologicalSex);
   const [timezone, setTimezone] = useState(initialTimezone ?? detectTimezone());
   const [unitSystem, setUnitSystem] = useState<UnitSystem>(initialUnitSystem);
+  const [maxHrInput, setMaxHrInput] = useState(initialMaxHr != null ? String(initialMaxHr) : "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -46,10 +49,11 @@ export function ProfileForm({
 
   function handleSave() {
     if (!dateOfBirth || !biologicalSex || !timezone) return;
+    const maxHr = maxHrInput.trim() === "" ? null : Number(maxHrInput);
     setError(null);
     startTransition(async () => {
       try {
-        await saveProfile({ dateOfBirth, biologicalSex, timezone, unitSystem });
+        await saveProfile({ dateOfBirth, biologicalSex, timezone, unitSystem, maxHr });
         setSaved(true);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to save.");
@@ -137,6 +141,26 @@ export function ProfileForm({
           />
         </div>
       </div>
+
+      <label className="flex flex-col gap-1 text-sm">
+        Max heart rate (optional)
+        <input
+          type="number"
+          inputMode="numeric"
+          min={100}
+          max={230}
+          value={maxHrInput}
+          onChange={(e) => {
+            setMaxHrInput(e.target.value);
+            setSaved(false);
+          }}
+          placeholder="220 minus your age"
+          className="field"
+        />
+      </label>
+      <p className="text-xs text-foreground/50 -mt-2">
+        Used for Strain and Energy Bank&apos;s heart-rate zones. Defaults to 220 minus your age if left blank.
+      </p>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 

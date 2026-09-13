@@ -1,8 +1,12 @@
 self.addEventListener("push", (event) => {
-  let data = { title: "Wake up", body: "Your Smart Alarm went off." };
+  // `tag` used to be hardcoded to "smart-alarm" here regardless of payload, so any
+  // other notification type (e.g. an illness/low-recovery alert) would collide with
+  // a same-day alarm under one OS notification. Read it from the payload instead,
+  // same as title/body already were, with "notification" as a generic fallback.
+  let data = { title: "Wake up", body: "Your Smart Alarm went off.", tag: "notification" };
   if (event.data) {
     try {
-      data = event.data.json();
+      data = { ...data, ...event.data.json() };
     } catch {
       data.body = event.data.text();
     }
@@ -13,7 +17,7 @@ self.addEventListener("push", (event) => {
       body: data.body,
       icon: "/icon",
       vibrate: [400, 200, 400, 200, 400],
-      tag: "smart-alarm",
+      tag: data.tag,
       requireInteraction: true,
     }),
   );
