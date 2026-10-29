@@ -1,20 +1,20 @@
 # Health Tracker
 
-A personal recovery and health dashboard. It takes the sleep, activity, and vitals data your phone or watch already syncs to the **Google Health API** and computes WHOOP-style analytics from it: recovery, strain, sleep score, sleep debt, stress, energy bank, VO₂max, and biological age. You don't need a subscription or any new hardware.
+A personal recovery and health dashboard. It takes the sleep, activity, and vitals data your phone or watch already syncs to the Google Health API and computes WHOOP-style analytics from it: recovery, strain, sleep score, sleep debt, stress, energy bank, VO₂max, and biological age. You don't need a subscription or any new hardware.
 
 It's built for one user (the owner), but every table uses per-user row-level security, so it can support more users later without a rewrite.
 
 ## Features
 
-- **Today dashboard**: recovery, strain, and sleep rings plus an energy bank, guidance, and a workout recommender. You can add, remove, and reorder widgets.
-- **Sleep**: a 7-factor sleep score, hypnogram, stage breakdown, sleep debt, and manual corrections.
-- **Activity and strain**: day strain on a 0–100 scale and active calories.
-- **Vitals**: heart-rate history, max HR, weight log, and trend charts.
-- **Cardio fitness and biological age**: VO₂max estimate and a biological age trend.
-- **Trends and recap**: long-range charts and a printable or exportable recap.
-- **Illness detection**: flags unusual deviations from your baseline.
-- **Smart alarm**: picks a wake time inside your window and sends it as a Web Push notification.
-- **Installable on iOS** from the home screen. Includes light and dark themes and a choice of metric or imperial units.
+- Today dashboard: recovery, strain, and sleep rings plus an energy bank, guidance, and a workout recommender. You can add, remove, and reorder widgets.
+- Sleep: a 7-factor sleep score, hypnogram, stage breakdown, sleep debt, and manual corrections.
+- Activity and strain: day strain on a 0–100 scale and active calories.
+- Vitals: heart-rate history, max HR, weight log, and trend charts.
+- Cardio fitness and biological age: VO₂max estimate and a biological age trend.
+- Trends and recap: long-range charts and a printable or exportable recap.
+- Illness detection: flags unusual deviations from your baseline.
+- Smart alarm: picks a wake time inside your window and sends it as a Web Push notification.
+- Installable on iOS from the home screen. Includes light and dark themes and a choice of metric or imperial units.
 
 ## Stack
 
@@ -28,12 +28,10 @@ Google Health API ──OAuth──▶ sync (ingest + nightly rollups) ──▶
                        UI (Server Components) ◀── lib/analytics ◀──┘
 ```
 
-1. **Connect**: Google OAuth (`app/api/auth/google/*`) stores tokens in `google_oauth_tokens`.
-2. **Sync**: `GET /api/sync` (requires `Authorization: Bearer $CRON_SECRET`) runs `syncUser()` for each connected account. It ingests sleep, activity, intraday HR, and sparse vitals, then rebuilds the last few nights of `health_logs` so vitals that arrive late get filled in automatically.
-3. **Schedule**: GitHub Actions calls the sync endpoint every 15 minutes (`.github/workflows/sync.yml`) and the alarm check every minute (`alarm.yml`). Vercel Cron also runs a daily sync as a backup (`vercel.json`).
-4. **Analytics**: the scores are pure functions in `lib/analytics/` that read already-synced data and never call Google.
-
-
+1. Connect: Google OAuth (`app/api/auth/google/*`) stores tokens in `google_oauth_tokens`.
+2. Sync: `GET /api/sync` (requires `Authorization: Bearer $CRON_SECRET`) runs `syncUser()` for each connected account. It ingests sleep, activity, intraday HR, and sparse vitals, then rebuilds the last few nights of `health_logs` so vitals that arrive late get filled in automatically.
+3. Schedule: GitHub Actions calls the sync endpoint every 15 minutes (`.github/workflows/sync.yml`) and the alarm check every minute (`alarm.yml`). Vercel Cron also runs a daily sync as a backup (`vercel.json`).
+4. Analytics: the scores are pure functions in `lib/analytics/` that read already-synced data and never call Google.
 
 ## Getting started
 
@@ -56,7 +54,7 @@ Apply the SQL migrations in `supabase/migrations/` in order. You can use `supaba
 pnpm dev    # http://localhost:3000
 ```
 
-Sign in, go to **Settings**, and connect Google Health. To pull data right away instead of waiting for the next scheduled run:
+Sign in, go to Settings, and connect Google Health. To pull data right away instead of waiting for the next scheduled run:
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync
@@ -106,3 +104,7 @@ lib/actions       Server Actions for user-authored data
 components/       UI, charts, dashboard widgets
 supabase/         SQL migrations
 ```
+
+## Status
+
+A single-user personal project. It can only show metrics the Google Health API exposes. VO₂max and biological age are estimates from resting heart rate, HRV and sleep data, and the app labels them that way. Vitest covers the scoring, rollup and alert logic; the Google ingest code and the pages have no automated tests.
