@@ -2,6 +2,8 @@
 
 A personal recovery and health dashboard. It takes the sleep, activity, and vitals data your phone or watch already syncs to the Google Health API and computes WHOOP-style analytics from it: recovery, strain, sleep score, sleep debt, stress, energy bank, VO₂max, and biological age. You don't need a subscription or any new hardware.
 
+Solo project by Kevin Yin.
+
 It's built for one user (the owner), but every table uses per-user row-level security, so it can support more users later without a rewrite.
 
 ## Features
